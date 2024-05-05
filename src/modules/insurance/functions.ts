@@ -8,7 +8,7 @@ import {UnipolApiStrategy} from "./strategy/unipolApiStrategy";
 export async function checkInsurance(ctx: Context){
     if(_checkDaScaricare()){
         await _download()
-        sendInsurance(ctx)
+        await sendInsurance(ctx)
     }
 }
 
@@ -28,16 +28,16 @@ async function _download(){
     await strategy.getInsurance()
 }
 
-export function sendInsurance(ctx: Context){
+export async function sendInsurance(ctx: Context){
     let constants = require('./constants.json')
     let pdfPath = constants.root+"/"+constants.docPath+"/certificato_assicurazione.pdf"
     if(fs.existsSync(pdfPath)){
         let document = path.basename(pdfPath)
-        ctx.replyWithDocument({source: fs.createReadStream(pdfPath), filename: document}, {caption:"Ecco la tua assicurazione!"})
+        await ctx.replyWithDocument({source: fs.createReadStream(pdfPath), filename: document}, {caption:"Ecco la tua assicurazione!"})
         //bot.telegram.sendDocument(chatId, document);
     }
     else{
-        ctx.reply("Il documento non è stato trovato");
+        await ctx.reply("Il documento non è stato trovato");
         //bot.telegram.sendMessage(chatId, "Il documento non è stato trovato");
     }
 }

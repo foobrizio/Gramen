@@ -1,8 +1,8 @@
-import {getBot, getServiceManager} from "../../bot/shared";
-import {Context} from "telegraf";
+import {Context, Scenes} from "telegraf";
 import {checkInsurance} from "./functions";
-import {IMessageHandler} from "../model/IMessageHandler";
+import {IMessageHandler} from "../../bot/model/IMessageHandler";
 import {BotCommand} from "telegraf/types";
+import {getBot, getServiceManager} from "../../bot/botManager";
 
 export class MessageHandler implements IMessageHandler{
 
@@ -19,14 +19,19 @@ export class MessageHandler implements IMessageHandler{
 
     attachCommands(){
         let bot = getBot();
-        bot.command("start_insurance", ctx => {
-            this.startInsurance(ctx)
+        bot.command("start_insurance", async ctx =>  {
+            await this.startInsurance(ctx)
             //ctx.reply("Work in progress")
         });
     }
 
+    prepareScenes(): Scenes.WizardScene<Scenes.WizardContext>[] {
+        // INFO: There are no scenes in this module
+        return []
+    }
+
     async startInsurance(ctx: Context){
-        ctx.reply("Servizio Assicurazione attivato")
+        await ctx.reply("Servizio Assicurazione attivato")
         let servMgr = getServiceManager();
 
         let userName = ctx.from?.first_name as string;
@@ -42,7 +47,7 @@ export class MessageHandler implements IMessageHandler{
                 intervalId: intervalId
             });
         } else{
-            ctx.reply('Hai già attivato il servizio Assicurazione')
+            await ctx.reply('Hai già attivato il servizio Assicurazione')
         }
     }
 }

@@ -1,7 +1,6 @@
 import * as path from 'path';
 import {ServicePair} from "./model/servicePair";
 import {Context} from "telegraf";
-import {sendMessage} from "./botFunctions";
 
 export class ServiceManager {
 
@@ -36,8 +35,18 @@ export class ServiceManager {
         return this.hasRunningElements(chatId) ? this.threadMap.get(chatId) as ServicePair[] : []
     }
 
-    unsubscribe(ctx: Context, servicePair: ServicePair){
-        ctx.reply("Annullamento della sottoscrizione "+servicePair.serviceName+" in corso...")
+    getServicePair(chatId: number, serviceName: string){
+        let array: ServicePair[] = this.threadMap.get(chatId)? this.threadMap.get(chatId) as ServicePair[] : [];
+        if(array.length === 0)
+            throw new Error("Il servizio non è stato trovato");
+        let elem= array.find( service => service.serviceName === serviceName)
+        if (elem === undefined)
+            throw new Error("Il servizio non è stato trovato");
+        return elem;
+    }
+
+    async unsubscribe(ctx: Context, servicePair: ServicePair){
+        await ctx.reply("Annullamento della sottoscrizione "+servicePair.serviceName+" in corso...")
         let intervalId = servicePair.intervalId;
         clearInterval(intervalId);
         let chatId = ctx.chat? ctx.chat.id as number : 0;
@@ -45,6 +54,6 @@ export class ServiceManager {
             return;
         // Qui eliminiamo il thread dalla mappa
         this._forgetSubscription(chatId, servicePair)
-        ctx.reply("Operazione completata. Da ora non riceverai più aggiornamenti su "+servicePair.serviceName);
+        await ctx.reply("Operazione completata. Da ora non riceverai più aggiornamenti su "+servicePair.serviceName);
     }
 }
