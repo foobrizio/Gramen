@@ -6,7 +6,6 @@ import {getBot} from "../../bot/botManager";
 import {InlineKeyboardMarkup} from "@telegraf/types";
 import * as fs from "fs";
 import * as https from "https";
-import {existsSync} from "node:fs";
 
 
 export class MessageHandler implements IMessageHandler{
@@ -66,10 +65,13 @@ export class MessageHandler implements IMessageHandler{
         let album_name = "";
         let path = "";
         let completePath = "";
+        let superPath = "";
+        let subFolderWasCreated: boolean = false;
         const constants = require('./constants.json')
         return new Scenes.WizardScene<Scenes.WizardContext>(
             this.createAlbumSceneName,
             async (ctx) => {
+                // STEP 1
                 try{
                     await ctx.reply("Inserire nome del nuovo album")
                     return ctx.wizard.next()
@@ -80,6 +82,7 @@ export class MessageHandler implements IMessageHandler{
                 }
             },
             async(ctx) => {
+                // STEP 2
                 try{
                     album_name = (ctx.message as any).text
                     await ctx.reply("Inserire percorso cartella in cui inserire il nuovo album")
@@ -91,13 +94,15 @@ export class MessageHandler implements IMessageHandler{
                 }
             },
             async(ctx) => {
+                // STEP 3
                 try{
                     path = (ctx.message as any).text
                     completePath = constants.photo_folder+"/"+path+"/"+album_name
-                    let superPath = constants.photo_folder+"/"+path;
+                    superPath = constants.photo_folder+"/"+path;
                     await ctx.reply("Creazione di una nuova cartella in "+completePath+" in corso")
                     if(!fs.existsSync(completePath)){
-                        if(!existsSync(superPath)){
+                        if(!fs.existsSync(superPath)){
+                            subFolderWasCreated = true
                             fs.mkdirSync(superPath)
                         }
                         fs.mkdirSync(completePath)
@@ -114,15 +119,18 @@ export class MessageHandler implements IMessageHandler{
                 }
             },
             async(ctx) => {
+                //STEP 4
                 try {
                     this._savePhoto(completePath, ctx);
-                    await ctx.reply("Salvataggio completato")
-                    //let writeStream = fs.createWriteStream(completePath+"/"+photoName+".jpg")
-                    //writeStream.write(file)
+                    //TODO: Non siamo attualmente in grado di inviare un unico messaggio per l'intero mediaGroup
+                    //await ctx.reply("Salvataggio completato")
                 }catch(error){
                     console.log('error:',error)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     fs.rmSync(completePath, {recursive: true, force: true})
+                    if(subFolderWasCreated){
+                        fs.rmSync(superPath)
+                    }
                 }
                 return ctx.scene.leave()
             }
@@ -277,7 +285,7 @@ export class MessageHandler implements IMessageHandler{
                 album_buttons.inline_keyboard.push([])
             }
         })
-        await ctx.sendMessage("Quale album vuoi scaricare?", {reply_markup: album_buttons})
+        await ctx.sendMessage(message, {reply_markup: album_buttons})
     }
 
 }

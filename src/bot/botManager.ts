@@ -103,7 +103,7 @@ class BotManager{
             }
         })
 
-        this.bot.command("hello", ctx => ctx.reply("Hi"))
+        this.bot.command("hello", ctx => ctx.reply("Hi, "+ctx.message.from.first_name))
 
         this.bot.command("list_commands", ctx => {
             ctx.scene.enter(this.listCommandsSceneName)
