@@ -1,0 +1,10 @@
+{
+    "docPath": "",
+    "root": "",
+    "unipolMainUrl": "https://www.unipolsai.it/certificato-assicurazione",
+    "unipolPdfUrl": "https://www.unipolsai.it/api/pub/v1/unsecure/polizze/certificato",
+    "pin": "",
+    "token": "",
+    "ibm-client-id": "",
+    "ibm-client-secret": ""
+}
