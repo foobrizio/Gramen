@@ -44,14 +44,13 @@ The developer can develop its own modules and increase the number of commands th
      * This method must return the list of scenes, if any, that have to be used by your commands
      */
     prepareScenes(): Scenes.WizardScene<Scenes.WizardContext>[]
-}
+    }
   ```
 ## Implemented functionalities:
 1. Possibility to activate/ stop threads that execute commands at specific intervals;
 2. Possibility to add custom modules;
 3. Insurance module for UnipolSai: the service downloads the new insurance whenever the old one is expired;
 4. PhotoAlbum module: you can create your own drive, add new albums and photos and download existing ones;
-
 
 ## TODO LIST:
 * Limited access to users for specific commands or modules
