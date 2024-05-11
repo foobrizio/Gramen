@@ -1,8 +1,8 @@
 import {BotCommand} from "telegraf/types";
-import {IMessageHandler} from "../bot/model/IMessageHandler";
+import {IMessageHandler} from "./model/IMessageHandler";
 import * as fs from "fs";
 import {Scenes} from "telegraf";
-import {enableUndoForScenes} from "../bot/botManager";
+import {enableUndoForScenes, getBot} from "./botManager";
 
 export class ModuleHandler{
 
@@ -23,9 +23,7 @@ export class ModuleHandler{
     }
 
     async getCommandsOfModule(module: string): Promise<BotCommand[]>{
-        let potentialModulePath = "./"+module+"/messageHandler"
-        let mod = await import(potentialModulePath)
-        let mh: IMessageHandler = new mod.MessageHandler()
+        let mh = await this.getMessageHandler(module)
         return mh.descriptionMapping()
     }
 
@@ -35,13 +33,11 @@ export class ModuleHandler{
         let cmdList: BotCommand[] = []
         // let config = require('../../config.json')
         for (const module of this._discoveredModules) {
-            let potentialModulePath = "./"+module+"/messageHandler"
             //let myModule = require(potentialModulePath)
             //console.log(myModule)
-            let mod = await import(potentialModulePath)
-            let mh = new mod.MessageHandler()
+            let mh = await this.getMessageHandler(module)
             cmdList = cmdList.concat(mh.descriptionMapping())
-            mh.attachCommands(cmdList)
+            mh.attachCommands(getBot())
         }
         return cmdList
     }
@@ -65,12 +61,16 @@ export class ModuleHandler{
     async prepareCommandScenes(): Promise<Scenes.WizardScene<Scenes.WizardContext>[]> {
         let sceneList: Scenes.WizardScene<Scenes.WizardContext>[] = []
         for (const module of this._discoveredModules){
-            let potentialModulePath = "./"+module+"/messageHandler"
-            let mod = await import(potentialModulePath)
-            let mh: IMessageHandler = new mod.MessageHandler()
+            let mh = await this.getMessageHandler(module)
             sceneList = sceneList.concat(mh.prepareScenes())
         }
         enableUndoForScenes(sceneList)
         return sceneList;
+    }
+
+    private async getMessageHandler(module: string): Promise<IMessageHandler>{
+        let path = "../"+this._modulesDir+"/"+module+"/messageHandler"
+        let mod = await import(path)
+        return new mod.MessageHandler() as IMessageHandler
     }
 }

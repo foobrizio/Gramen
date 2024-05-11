@@ -1,8 +1,9 @@
-import {Context, Scenes} from "telegraf";
+import {Context, Scenes, Telegraf} from "telegraf";
 import {checkInsurance} from "./functions";
 import {IMessageHandler} from "../../bot/model/IMessageHandler";
 import {BotCommand} from "telegraf/types";
 import {getBot, getServiceManager} from "../../bot/botManager";
+import {WizardContext} from "telegraf/typings/scenes";
 
 export class MessageHandler implements IMessageHandler{
 
@@ -17,8 +18,7 @@ export class MessageHandler implements IMessageHandler{
             ]
     }
 
-    attachCommands(){
-        let bot = getBot();
+    attachCommands(bot: Telegraf<WizardContext>){
         bot.command("start_insurance", async ctx =>  {
             await this.startInsurance(ctx)
             //ctx.reply("Work in progress")

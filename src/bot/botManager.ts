@@ -3,7 +3,7 @@ import {Context, Scenes, session, Telegraf} from "telegraf";
 import {WizardContext} from "telegraf/typings/scenes";
 import {BotCommand} from "telegraf/types";
 import {InlineKeyboardMarkup} from "@telegraf/types";
-import {ModuleHandler} from "../modules/moduleHandler";
+import {ModuleHandler} from "./moduleHandler";
 import config from "../util/config";
 
 class BotManager{

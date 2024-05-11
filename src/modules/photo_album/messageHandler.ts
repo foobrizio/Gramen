@@ -1,11 +1,12 @@
 import {IMessageHandler} from "../../bot/model/IMessageHandler";
 import {BotCommand} from "telegraf/types";
-import {Scenes} from "telegraf";
+import {Scenes, Telegraf} from "telegraf";
 import {getPhotosFromAlbum, listOfAlbums, listOfAlbumsAsString, smartSplitting} from "./functions";
 import {enableUndoForScenes, getBot, setUndoCommand} from "../../bot/botManager";
 import {InlineKeyboardMarkup} from "@telegraf/types";
 import * as fs from "fs";
 import * as https from "https";
+import {WizardContext} from "telegraf/typings/scenes";
 
 
 export class MessageHandler implements IMessageHandler{
@@ -14,8 +15,7 @@ export class MessageHandler implements IMessageHandler{
     private readonly addPhotosSceneName:string = "photo_album.add_photos"
     private readonly getAlbumSceneName:string = "photo_album.get_album"
 
-    attachCommands(): void {
-        let bot = getBot();
+    attachCommands(bot: Telegraf<WizardContext>): void {
         bot.command("create_album", ctx => {
             ctx.scene.enter(this.createAlbumSceneName)
         })
