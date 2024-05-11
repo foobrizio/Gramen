@@ -2,7 +2,7 @@ import {IMessageHandler} from "../../bot/model/IMessageHandler";
 import {BotCommand} from "telegraf/types";
 import {Scenes} from "telegraf";
 import {getPhotosFromAlbum, listOfAlbums, listOfAlbumsAsString, smartSplitting} from "./functions";
-import {getBot} from "../../bot/botManager";
+import {enableUndoForScenes, getBot, setUndoCommand} from "../../bot/botManager";
 import {InlineKeyboardMarkup} from "@telegraf/types";
 import * as fs from "fs";
 import * as https from "https";
@@ -58,7 +58,9 @@ export class MessageHandler implements IMessageHandler{
         const createAlbumScene = this._prepareCreateAlbumScene()
         const addPhotosScene = this._prepareAddPhotosScene()
         const getAlbumScene = this._prepareGetAlbumScene()
-        return [createAlbumScene, addPhotosScene, getAlbumScene]
+        let result = [createAlbumScene, addPhotosScene, getAlbumScene]
+        enableUndoForScenes(result)
+        return result
     }
 
     private _prepareCreateAlbumScene(): Scenes.WizardScene<Scenes.WizardContext> {
@@ -72,6 +74,7 @@ export class MessageHandler implements IMessageHandler{
             this.createAlbumSceneName,
             async (ctx) => {
                 // STEP 1
+                await setUndoCommand(ctx)
                 try{
                     await ctx.reply("Inserire nome del nuovo album")
                     return ctx.wizard.next()
@@ -144,6 +147,7 @@ export class MessageHandler implements IMessageHandler{
         return new Scenes.WizardScene<Scenes.WizardContext>(
             this.addPhotosSceneName,
             async (ctx) => {
+                await setUndoCommand(ctx)
                 try{
                     await this._viewAlbumChoice(ctx, "In quale album vuoi aggiungere le nuove foto?")
                     return ctx.wizard.next()
@@ -192,6 +196,7 @@ export class MessageHandler implements IMessageHandler{
         return new Scenes.WizardScene<Scenes.WizardContext>(
             this.getAlbumSceneName,
             async (ctx) => {
+                await setUndoCommand(ctx)
                 try{
                     await this._viewAlbumChoice(ctx, "Quale album vuoi scaricare?")
                     return ctx.wizard.next()

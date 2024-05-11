@@ -49,6 +49,20 @@ class BotManager{
         await this._activateCommands(mh)
     }
 
+    async reloadCommands(ctx: Context){
+        const mh = new ModuleHandler()
+        let moduleCommands = await mh.activateCommands()
+        let commandList = this.getDefaultCommands()
+        commandList = commandList.concat(moduleCommands)
+        await this.bot.telegram.setMyCommands(commandList,
+            {
+                scope: {
+                    type: "chat",
+                    chat_id: ctx.chat?.id || 0
+                }
+            });
+    }
+
     private async _activateCommands(mh: ModuleHandler){
         this._createDefaultCommands()
         let moduleCommands = await mh.activateCommands()
@@ -130,6 +144,7 @@ class BotManager{
         return new Scenes.WizardScene<Scenes.WizardContext>(
             this.listCommandsSceneName,
             async (ctx) => {
+                await setUndoCommand(ctx)
                 //STEP 1: Recuperiamo i nomi dei moduli e prepariamo i bottoni
                 let mh = new ModuleHandler()
                 let modules = mh.discoveredModules
@@ -172,6 +187,7 @@ class BotManager{
         return new Scenes.WizardScene<Scenes.WizardContext>(
             this.stopServiceSceneName,
             async (ctx) => {
+                await setUndoCommand(ctx)
                 //STEP 1: Chiediamo quale servizio attualmente in esecuzione vuole stoppare
                 let id = ctx.chat? ctx.chat.id: 0
                 let elements = this.subMgr.getRunningElements(id)
@@ -234,4 +250,34 @@ export function getBot(): Telegraf<Scenes.WizardContext>{
     else throw new Error("Bot not initialized")
 }
 
+/**
+ * Use it when you create scenes. In this way, every scene can be aborted in every step he's in.
+ * When a scene is enhanced, you won't be able to see the usual list of commands, but only the 'undo' command until
+ * the end of the scene.
+ * @param scenes the array containing the scenes you want to enhance with 'undo' command.
+ */
+export function enableUndoForScenes(scenes: Array<Scenes.WizardScene<Scenes.WizardContext>>){
+    scenes.forEach(scene => {
+        scene.command("undo", async(ctx) => {
+            await ctx.reply("Comando annullato")
+            await ctx.scene.leave()
+            await botManager.reloadCommands(ctx)
+        })
+    })
+}
+
+export async function setUndoCommand(ctx: Context){
+    const command = {
+        command: "undo",
+        description: "Aborts the current scene"
+    }
+    console.log('undcommands')
+    await getBot().telegram.setMyCommands([command],
+        {
+            scope: {
+                type: "chat",
+                chat_id: ctx.chat?.id || 0
+            }
+        })
+}
 

@@ -2,6 +2,7 @@ import {BotCommand} from "telegraf/types";
 import {IMessageHandler} from "../bot/model/IMessageHandler";
 import * as fs from "fs";
 import {Scenes} from "telegraf";
+import {enableUndoForScenes} from "../bot/botManager";
 
 export class ModuleHandler{
 
@@ -69,6 +70,7 @@ export class ModuleHandler{
             let mh: IMessageHandler = new mod.MessageHandler()
             sceneList = sceneList.concat(mh.prepareScenes())
         }
+        enableUndoForScenes(sceneList)
         return sceneList;
     }
 }
