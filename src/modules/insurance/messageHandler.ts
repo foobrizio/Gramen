@@ -4,25 +4,22 @@ import {IMessageHandler} from "../../bot/model/IMessageHandler";
 import {BotCommand} from "telegraf/types";
 import {getBot, getServiceManager} from "../../bot/botManager";
 import {WizardContext} from "telegraf/typings/scenes";
+import {ActiveBotCommand} from "../../bot/model/ActiveBotCommand";
 
 export class MessageHandler implements IMessageHandler{
 
     readonly serviceName: string = "Insurance"
 
-    descriptionMapping(): BotCommand[]{
+    descriptionMapping(): ActiveBotCommand[]{
         return [
             {
                 command:'start_insurance',
-                description:'Activate the insurance service'
+                description:'Activate the insurance service',
+                executedFunction: async (ctx) => {
+                    await this.startInsurance(ctx)
+                }
             }
             ]
-    }
-
-    attachCommands(bot: Telegraf<WizardContext>){
-        bot.command("start_insurance", async ctx =>  {
-            await this.startInsurance(ctx)
-            //ctx.reply("Work in progress")
-        });
     }
 
     prepareScenes(): Scenes.WizardScene<Scenes.WizardContext>[] {

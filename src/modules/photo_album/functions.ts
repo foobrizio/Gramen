@@ -1,17 +1,21 @@
 import * as fs from "fs";
-import {InputFile, InputMediaPhoto} from "telegraf/types";
+import {InputMediaPhoto} from "telegraf/types";
 import {SplitResult} from "./model/SplitResult";
 
 
 // region listAlbum
-export function listOfAlbums(): string[]{
+export function listOfAlbums(id: string): string[]{
     let constants = require('./constants.json')
-    let basePath = constants.photo_folder;
+    let basePath = constants.photo_folder+"/"+id;
+    if(!fs.existsSync(basePath))
+        return [];
     return _findLeaves(basePath, [])
 }
 
-export function listOfAlbumsAsString(): string{
-    let album_list = listOfAlbums()
+export function listOfAlbumsAsString(id: string): string{
+    let album_list = listOfAlbums(id)
+    if(album_list.length == 0)
+        return "";
     let finalString = "";
     album_list.forEach((album, index) => {
         finalString = finalString.concat((index+1)+") "+album+";\n")
@@ -97,7 +101,6 @@ export function smartSplitting(array: string[]): SplitResult{
     };
 }
 //endregion
-
 
 //region common stuff
 

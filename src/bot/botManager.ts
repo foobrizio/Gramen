@@ -1,10 +1,10 @@
 import {ServiceManager} from "./serviceManager";
 import {Context, Scenes, session, Telegraf} from "telegraf";
 import {WizardContext} from "telegraf/typings/scenes";
-import {BotCommand} from "telegraf/types";
 import {InlineKeyboardMarkup} from "@telegraf/types";
 import {ModuleHandler} from "./moduleHandler";
 import config from "../util/config";
+import {ActiveBotCommand} from "./model/ActiveBotCommand";
 
 class BotManager{
 
@@ -13,12 +13,15 @@ class BotManager{
     private readonly listCommandsSceneName = "bot.list_commands_scene";
     private readonly stopServiceSceneName = "bot.stop_service_scene";
     private sceneList: Scenes.WizardScene<Scenes.WizardContext>[] = [];
+
+
     constructor() {
         this._bot = new Telegraf<Scenes.WizardContext>(config.bot_token);
         this._subMgr = new ServiceManager();
         this._initializeManager()
     }
 
+    //region PUBLIC METHODS
     get subMgr(): ServiceManager {
         return this._subMgr;
     }
@@ -27,17 +30,28 @@ class BotManager{
         return this._bot;
     }
 
-    private _initializeManager(){
-        this._prepareDefaultCommandScenes()
-        this.bot.use(session())
-    }
-
-    getDefaultCommands(): BotCommand[]{
+    getDefaultCommands(): ActiveBotCommand[]{
         return [
-            {command: "hello", description:"Sends a welcome message"},
-            {command: "start_test", description:"Activate the test service. Just for didactic purpose"},
-            {command: "stop", description:"Stops an active service."},
-            {command: "list_commands", description: "Lists every command included on a specific module"}
+            {
+                command: "hello",
+                description:"Sends a welcome message",
+                executedFunction: async (ctx) => await this._hello(ctx)
+            },
+            {
+                command: "start_test",
+                description:"Activate the test service. Just for didactic purpose",
+                executedFunction: async (ctx) => await this._start_test(ctx)
+            },
+            {
+                command: "stop",
+                description:"Stops an active service.",
+                executedFunction: async (ctx) => await this._stop(ctx)
+            },
+            {
+                command: "list_commands",
+                description: "Lists every command included on a specific module",
+                executedFunction: async (ctx) => await ctx.scene.enter(this.listCommandsSceneName)
+            }
         ]
     }
 
@@ -63,6 +77,15 @@ class BotManager{
             });
     }
 
+    //endregion
+
+    //region PRIVATE METHODS
+    private _initializeManager(){
+        this._prepareDefaultCommandScenes()
+        this.bot.use(session())
+    }
+
+
     private async _activateCommands(mh: ModuleHandler){
         this._createDefaultCommands()
         let moduleCommands = await mh.activateCommands()
@@ -72,57 +95,67 @@ class BotManager{
     }
 
     private _createDefaultCommands(){
-        this.bot.command("start_test",  async (ctx) => {
-            let servMgr = getServiceManager()
-            let servName = 'Test'
-            let chatId = ctx.chat? ctx.chat.id as number : 0;
-            if(chatId === 0)
-                return;
-            if(servMgr.isSubscribed(chatId, servName)) {
-                await ctx.reply('Il servizio è già attivo.');
-                return;
-            }
-            // Imposta l'intervallo di 4 secondi per l'invio periodico
-            await ctx.reply(servName+" attivato!")
-            let intervalId = setInterval(() => {
-                this.sendMessage(ctx)
-            }, 4000);
-            //}
-            //Qui aggiungiamo il thread nella mappa
-            servMgr.subscribe(chatId, {
-                intervalId: intervalId as NodeJS.Timeout,
-                serviceName: servName
-            });
-        })
-
-        this.bot.command("stop", ctx => {
-            let subMgr = getServiceManager()
-            let chatId: number = ctx.chat.id;
-            if(subMgr.hasRunningElements(chatId)){
-                let elements = subMgr.getRunningElements(chatId)
-                if(elements.length === 1){
-                    // C'è un solo elemento a cui possiamo disiscriverci. Facciamo automaticamente l'unsubscribe
-                    let servicePair = elements[0]
-                    setTimeout( () => {
-                        subMgr.unsubscribe(ctx, servicePair);
-                    },1500)
-                }
-                else{
-                    // C'è più di un elemento. Dobbiamo chiedere all'utente quale servizio vuole disabilitare
-                    ctx.scene.enter(this.stopServiceSceneName);
-                }
-            }
-            else{
-                ctx.reply("Non c'è nessun servizio attivo")
-            }
-        })
-
-        this.bot.command("hello", ctx => ctx.reply("Hi, "+ctx.message.from.first_name))
-
-        this.bot.command("list_commands", ctx => {
-            ctx.scene.enter(this.listCommandsSceneName)
+        this.getDefaultCommands().forEach(cmd => {
+            this.bot.command(cmd.command, cmd.executedFunction)
         })
     }
+
+    async _sendMessage(ctx: Context) {
+        await ctx.reply('Messaggio periodico ogni 4 secondi.');
+    }
+
+    //endregion
+
+    // region COMMANDS
+    private async _start_test(ctx: Scenes.WizardContext){
+        let servMgr = getServiceManager()
+        let servName = 'Test'
+        let chatId = ctx.chat? ctx.chat.id as number : 0;
+        if(chatId === 0)
+            return;
+        if(servMgr.isSubscribed(chatId, servName)) {
+            await ctx.reply('Il servizio è già attivo.');
+            return;
+        }
+        // Imposta l'intervallo di 4 secondi per l'invio periodico
+        await ctx.reply(servName+" attivato!")
+        let intervalId = setInterval(() => {
+            this._sendMessage(ctx)
+        }, 4000);
+        //}
+        //Qui aggiungiamo il thread nella mappa
+        servMgr.subscribe(chatId, {
+            intervalId: intervalId as NodeJS.Timeout,
+            serviceName: servName
+        });
+    }
+
+    private async _stop(ctx: Scenes.WizardContext){
+        let subMgr = getServiceManager()
+        let chatId: number = (ctx.chat as any).id;
+        if(subMgr.hasRunningElements(chatId)){
+            let elements = subMgr.getRunningElements(chatId)
+            if(elements.length === 1){
+                // C'è un solo elemento a cui possiamo disiscriverci. Facciamo automaticamente l'unsubscribe
+                let servicePair = elements[0]
+                setTimeout( () => {
+                    subMgr.unsubscribe(ctx, servicePair);
+                },1500)
+            }
+            else{
+                // C'è più di un elemento. Dobbiamo chiedere all'utente quale servizio vuole disabilitare
+                await ctx.scene.enter(this.stopServiceSceneName);
+            }
+        }
+        else{
+            await ctx.reply("Non c'è nessun servizio attivo")
+        }
+    }
+
+    private async _hello(ctx: Scenes.WizardContext){
+        await ctx.reply("Hi, "+(ctx.message as any).from.first_name)
+    }
+    //endregion
 
     // region SCENES
 
@@ -223,9 +256,7 @@ class BotManager{
 
     //endregion
 
-    async sendMessage(ctx: Context) {
-        await ctx.reply('Messaggio periodico ogni 4 secondi.');
-    }
+
 }
 
 
@@ -250,6 +281,7 @@ export function getBot(): Telegraf<Scenes.WizardContext>{
     else throw new Error("Bot not initialized")
 }
 
+//region UNDO
 /**
  * Use it when you create scenes. In this way, every scene can be aborted in every step he's in.
  * When a scene is enhanced, you won't be able to see the usual list of commands, but only the 'undo' command until
@@ -259,11 +291,15 @@ export function getBot(): Telegraf<Scenes.WizardContext>{
 export function enableUndoForScenes(scenes: Array<Scenes.WizardScene<Scenes.WizardContext>>){
     scenes.forEach(scene => {
         scene.command("undo", async(ctx) => {
-            await ctx.reply("Comando annullato")
-            await ctx.scene.leave()
-            await botManager.reloadCommands(ctx)
+            await undo(ctx);
         })
     })
+}
+
+export async function undo(ctx: Scenes.WizardContext<Scenes.WizardSessionData>){
+    await ctx.reply("Comando annullato")
+    await ctx.scene.leave()
+    await botManager.reloadCommands(ctx)
 }
 
 export async function setUndoCommand(ctx: Context){
@@ -271,7 +307,6 @@ export async function setUndoCommand(ctx: Context){
         command: "undo",
         description: "Aborts the current scene"
     }
-    console.log('undcommands')
     await getBot().telegram.setMyCommands([command],
         {
             scope: {
@@ -280,4 +315,6 @@ export async function setUndoCommand(ctx: Context){
             }
         })
 }
+
+//endregion
 

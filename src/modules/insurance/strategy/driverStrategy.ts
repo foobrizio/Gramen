@@ -52,7 +52,7 @@ export class DriverStrategy{
                     resolve(true)
                 }, 10000)
             }catch(error) {
-                console.log('errore:', error)
+                console.error(error)
                 reject(error);
             }
         })

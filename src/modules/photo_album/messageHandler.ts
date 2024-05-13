@@ -1,12 +1,11 @@
 import {IMessageHandler} from "../../bot/model/IMessageHandler";
-import {BotCommand} from "telegraf/types";
-import {Scenes, Telegraf} from "telegraf";
+import {Scenes} from "telegraf";
 import {getPhotosFromAlbum, listOfAlbums, listOfAlbumsAsString, smartSplitting} from "./functions";
-import {enableUndoForScenes, getBot, setUndoCommand} from "../../bot/botManager";
+import {enableUndoForScenes, getBot, setUndoCommand, undo} from "../../bot/botManager";
 import {InlineKeyboardMarkup} from "@telegraf/types";
 import * as fs from "fs";
-import * as https from "https";
-import {WizardContext} from "telegraf/typings/scenes";
+import * as https from "https"
+import {ActiveBotCommand} from "../../bot/model/ActiveBotCommand";
 
 
 export class MessageHandler implements IMessageHandler{
@@ -15,40 +14,51 @@ export class MessageHandler implements IMessageHandler{
     private readonly addPhotosSceneName:string = "photo_album.add_photos"
     private readonly getAlbumSceneName:string = "photo_album.get_album"
 
-    attachCommands(bot: Telegraf<WizardContext>): void {
-        bot.command("create_album", ctx => {
-            ctx.scene.enter(this.createAlbumSceneName)
-        })
-        bot.command("add_photos_to_album", ctx => {
-            ctx.scene.enter(this.addPhotosSceneName)
-        })
-        bot.command("list_album", ctx => {
-            let albumListToString = listOfAlbumsAsString()
-            ctx.reply(albumListToString)
-        })
-        bot.command("get_album", ctx => {
-            ctx.scene.enter(this.getAlbumSceneName)
-        })
+    async listAlbumCommand(ctx: Scenes.WizardContext){
+        const id = (ctx.chat as any).id;
+        const albumListToString = listOfAlbumsAsString(id)
+        if(albumListToString.length == 0){
+            await ctx.reply("Non hai album")
+            await undo(ctx)
+            return;
+        }
+        else {
+            await ctx.reply(albumListToString)
+        }
     }
 
 
-    descriptionMapping(): BotCommand[] {
+    descriptionMapping(): ActiveBotCommand[] {
         return [
             {
                 command: "create_album",
-                description: "Creates a new collection of photos"
+                description: "Creates a new collection of photos",
+                executedFunction: async (ctx) => {
+                    await ctx.scene.enter(this.createAlbumSceneName)
+                }
             },
             {
                 command: "add_photos_to_album",
-                description: "Adds new photos to an album"
+                description: "Adds new photos to an album",
+                executedFunction: async (ctx) => {
+                    console.log(this.addPhotosSceneName)
+                    console.log((ctx.scene as any).scenes)
+                    await ctx.scene.enter(this.addPhotosSceneName)
+                }
             },
             {
                 command: "list_album",
-                description: "Lists all the collection of photo albums"
+                description: "Lists all the collection of photo albums",
+                executedFunction: async (ctx) => {
+                    await this.listAlbumCommand(ctx)
+                }
             },
             {
                 command: "get_album",
-                description: "Returns all the photos of a specific album"
+                description: "Returns all the photos of a specific album",
+                executedFunction: async (ctx) => {
+                    await ctx.scene.enter(this.getAlbumSceneName)
+                }
             }
         ];
     }
@@ -68,6 +78,7 @@ export class MessageHandler implements IMessageHandler{
         let path = "";
         let completePath = "";
         let superPath = "";
+        let idPath = "";
         let subFolderWasCreated: boolean = false;
         const constants = require('./constants.json')
         return new Scenes.WizardScene<Scenes.WizardContext>(
@@ -79,7 +90,7 @@ export class MessageHandler implements IMessageHandler{
                     await ctx.reply("Inserire nome del nuovo album")
                     return ctx.wizard.next()
                 }catch(error: any){
-                    console.log('error:', error)
+                    console.error( error)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     return ctx.scene.leave()
                 }
@@ -91,7 +102,7 @@ export class MessageHandler implements IMessageHandler{
                     await ctx.reply("Inserire percorso cartella in cui inserire il nuovo album")
                     return ctx.wizard.next()
                 }catch(error: any){
-                    console.log('error:', error)
+                    console.error( error)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     return ctx.scene.leave()
                 }
@@ -100,11 +111,16 @@ export class MessageHandler implements IMessageHandler{
                 // STEP 3
                 try{
                     path = (ctx.message as any).text
-                    completePath = constants.photo_folder+"/"+path+"/"+album_name
-                    superPath = constants.photo_folder+"/"+path;
+                    const id = (ctx.chat as any).id
+                    idPath = constants.photo_folder+"/"+id;
+                    superPath = idPath+"/"+path;
+                    completePath = superPath+"/"+album_name
                     await ctx.reply("Creazione di una nuova cartella in "+completePath+" in corso")
                     if(!fs.existsSync(completePath)){
                         if(!fs.existsSync(superPath)){
+                            if(!fs.existsSync(idPath)){
+                                fs.mkdirSync(idPath)
+                            }
                             subFolderWasCreated = true
                             fs.mkdirSync(superPath)
                         }
@@ -116,7 +132,7 @@ export class MessageHandler implements IMessageHandler{
                         return await ctx.scene.leave()
                     }
                 }catch(error: any){
-                    console.log('error:', error)
+                    console.error( error)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     return ctx.scene.leave()
                 }
@@ -128,7 +144,7 @@ export class MessageHandler implements IMessageHandler{
                     //TODO: Non siamo attualmente in grado di inviare un unico messaggio per l'intero mediaGroup
                     //await ctx.reply("Salvataggio completato")
                 }catch(error){
-                    console.log('error:',error)
+                    console.error(error)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     fs.rmSync(completePath, {recursive: true, force: true})
                     if(subFolderWasCreated){
@@ -152,7 +168,7 @@ export class MessageHandler implements IMessageHandler{
                     await this._viewAlbumChoice(ctx, "In quale album vuoi aggiungere le nuove foto?")
                     return ctx.wizard.next()
                 }catch(error: any){
-                    console.log('error:', error)
+                    console.error(error)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     await ctx.scene.leave()
                 }
@@ -161,7 +177,8 @@ export class MessageHandler implements IMessageHandler{
                 try{
                     album_name = (ctx.message as any).text
                     const constants = require('./constants.json')
-                    complete_path = constants.photo_folder+"/"+album_name;
+                    const id = (ctx.chat as any).id
+                    complete_path = constants.photo_folder+"/"+id+"/"+album_name;
                     if(fs.existsSync(complete_path)){
                         await ctx.reply("Ora aggiungi le foto nell'album '"+album_name+"'");
                         return ctx.wizard.next()
@@ -172,7 +189,7 @@ export class MessageHandler implements IMessageHandler{
                     }
 
                 }catch(error: any){
-                    console.log('error:', error)
+                    console.error( error)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     await ctx.scene.leave()
                 }
@@ -184,7 +201,7 @@ export class MessageHandler implements IMessageHandler{
                     await ctx.reply("Inserimento in corso")
                     return await ctx.scene.leave()
                 }catch(error: any){
-                    console.log('error:', error)
+                    console.error( error)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     await ctx.scene.leave()
                 }
@@ -201,7 +218,7 @@ export class MessageHandler implements IMessageHandler{
                     await this._viewAlbumChoice(ctx, "Quale album vuoi scaricare?")
                     return ctx.wizard.next()
                 }catch(error: any){
-                    console.log('error:', error)
+                    console.error( error)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     return ctx.scene.leave()
                 }
@@ -234,7 +251,7 @@ export class MessageHandler implements IMessageHandler{
                         await ctx.replyWithMediaGroup(innerArray)
                     }
                 }catch(error: any){
-                    console.log('error:', error)
+                    console.error( error)
                     await ctx.reply('Si è verificato un errore durante l\'esecuzione del comando')
                 }
                 return ctx.scene.leave()
@@ -273,7 +290,13 @@ export class MessageHandler implements IMessageHandler{
     }
 
     private async _viewAlbumChoice(ctx: Scenes.WizardContext<Scenes.WizardSessionData>, message:string){
-        let albums = listOfAlbums()
+        let albums = listOfAlbums((ctx.chat as any).id)
+        if( albums.length == 0){
+            // Dobbiamo invocare l'undo + reloadCommand
+            await ctx.reply("Non hai album");
+            await undo(ctx)
+            return;
+        }
         let album_buttons: InlineKeyboardMarkup = {
             inline_keyboard: [[]]
         }

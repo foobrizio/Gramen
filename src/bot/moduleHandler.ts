@@ -3,6 +3,7 @@ import {IMessageHandler} from "./model/IMessageHandler";
 import * as fs from "fs";
 import {Scenes} from "telegraf";
 import {enableUndoForScenes, getBot} from "./botManager";
+import {ActiveBotCommand} from "./model/ActiveBotCommand";
 
 export class ModuleHandler{
 
@@ -11,7 +12,6 @@ export class ModuleHandler{
     private readonly _discoveredModules: string[]
 
     constructor() {
-
         const config = require("../../config.json")
         this._root = config.root
         this._modulesDir = "modules"
@@ -27,19 +27,25 @@ export class ModuleHandler{
         return mh.descriptionMapping()
     }
 
-
-
-    async activateCommands(): Promise<BotCommand[]>{
-        let cmdList: BotCommand[] = []
+    async activateCommands(): Promise<ActiveBotCommand[]>{
+        let cmdList: ActiveBotCommand[] = []
         // let config = require('../../config.json')
         for (const module of this._discoveredModules) {
             //let myModule = require(potentialModulePath)
             //console.log(myModule)
             let mh = await this.getMessageHandler(module)
-            cmdList = cmdList.concat(mh.descriptionMapping())
-            mh.attachCommands(getBot())
+            let activeBotCommands =mh.descriptionMapping()
+            cmdList = cmdList.concat(activeBotCommands)
+            this.applyCommands(activeBotCommands)
+            //mh.attachCommands(getBot())
         }
         return cmdList
+    }
+
+    applyCommands(activeBotCommands: ActiveBotCommand[]){
+        activeBotCommands.forEach( command => {
+            getBot().command(command.command, command.executedFunction)
+        })
     }
 
     discoverModules(): string[]{
