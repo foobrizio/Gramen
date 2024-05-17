@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import logger from "../../../util/logger";
 
 export class UnipolApiStrategy{
 
@@ -65,6 +66,7 @@ export class UnipolApiStrategy{
                     }
                 });
             }catch(error){
+                logger.error(`unipolApiStrategy.savePdfFile error: ${error}`)
                 reject(error);
             }
         })

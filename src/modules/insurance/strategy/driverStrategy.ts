@@ -1,6 +1,7 @@
 import {Browser, Builder, By, Capabilities, Key, until, WebDriver} from 'selenium-webdriver';
 import {Options} from "selenium-webdriver/chrome";
 import {rejects} from "node:assert";
+import logger from "../../../util/logger";
 
 
 export class DriverStrategy{
@@ -30,6 +31,7 @@ export class DriverStrategy{
     async getInsurance(){
         return new Promise(async (resolve, reject) => {
             try{
+                logger.info('Get insurance in execution')
                 let constants = require('../constants.json')
                 let url = constants.unipolMainUrl+"?token="+constants.token;
                 await this.driver.get(url)
@@ -52,7 +54,7 @@ export class DriverStrategy{
                     resolve(true)
                 }, 10000)
             }catch(error) {
-                console.error(error)
+                logger.error(`${error}`)
                 reject(error);
             }
         })

@@ -4,6 +4,7 @@ import * as fs from "fs";
 import {Scenes} from "telegraf";
 import {enableUndoForScenes, getBot} from "./botManager";
 import {ActiveBotCommand} from "./model/ActiveBotCommand";
+import logger from "../util/logger";
 
 export class ModuleHandler{
 
@@ -60,7 +61,7 @@ export class ModuleHandler{
                 let dirPath = moduleDirsPath+"/"+dir+"/"
                 return fs.existsSync(dirPath+"messageHandler.ts")
             });
-        console.log('Modules found:', dirs)
+        logger.info(`Modules found : ${dirs}`)
         return dirs;
     }
 

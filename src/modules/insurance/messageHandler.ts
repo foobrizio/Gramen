@@ -5,6 +5,7 @@ import {BotCommand} from "telegraf/types";
 import {getBot, getServiceManager} from "../../bot/botManager";
 import {WizardContext} from "telegraf/typings/scenes";
 import {ActiveBotCommand} from "../../bot/model/ActiveBotCommand";
+import logger from "../../util/logger";
 
 export class MessageHandler implements IMessageHandler{
 
@@ -28,6 +29,7 @@ export class MessageHandler implements IMessageHandler{
     }
 
     async startInsurance(ctx: Context){
+        logger.info(`COMMAND: Start insurance -> ${ctx}`)
         await ctx.reply("Servizio Assicurazione attivato")
         let servMgr = getServiceManager();
 

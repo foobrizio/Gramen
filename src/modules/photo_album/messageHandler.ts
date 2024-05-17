@@ -6,6 +6,7 @@ import {InlineKeyboardMarkup} from "@telegraf/types";
 import * as fs from "fs";
 import * as https from "https"
 import {ActiveBotCommand} from "../../bot/model/ActiveBotCommand";
+import logger from "../../util/logger";
 
 
 export class MessageHandler implements IMessageHandler{
@@ -14,19 +15,6 @@ export class MessageHandler implements IMessageHandler{
     private readonly addPhotosSceneName:string = "photo_album.add_photos"
     private readonly getAlbumSceneName:string = "photo_album.get_album"
 
-    async listAlbumCommand(ctx: Scenes.WizardContext){
-        const id = (ctx.chat as any).id;
-        const albumListToString = listOfAlbumsAsString(id)
-        if(albumListToString.length == 0){
-            await ctx.reply("Non hai album")
-            await undo(ctx)
-            return;
-        }
-        else {
-            await ctx.reply(albumListToString)
-        }
-    }
-
 
     descriptionMapping(): ActiveBotCommand[] {
         return [
@@ -34,6 +22,7 @@ export class MessageHandler implements IMessageHandler{
                 command: "create_album",
                 description: "Creates a new collection of photos",
                 executedFunction: async (ctx) => {
+                    logger.info(`COMMAND: create_album -> ${ctx}`)
                     await ctx.scene.enter(this.createAlbumSceneName)
                 }
             },
@@ -41,8 +30,7 @@ export class MessageHandler implements IMessageHandler{
                 command: "add_photos_to_album",
                 description: "Adds new photos to an album",
                 executedFunction: async (ctx) => {
-                    console.log(this.addPhotosSceneName)
-                    console.log((ctx.scene as any).scenes)
+                    logger.info(`COMMAND: add_photos_to_album -> ${ctx}`)
                     await ctx.scene.enter(this.addPhotosSceneName)
                 }
             },
@@ -57,6 +45,7 @@ export class MessageHandler implements IMessageHandler{
                 command: "get_album",
                 description: "Returns all the photos of a specific album",
                 executedFunction: async (ctx) => {
+                    logger.info(`COMMAND: get_album -> ${ctx}`)
                     await ctx.scene.enter(this.getAlbumSceneName)
                 }
             }
@@ -71,6 +60,20 @@ export class MessageHandler implements IMessageHandler{
         let result = [createAlbumScene, addPhotosScene, getAlbumScene]
         enableUndoForScenes(result)
         return result
+    }
+
+    async listAlbumCommand(ctx: Scenes.WizardContext){
+        logger.info(`COMMAND: list_album -> ${ctx}`)
+        const id = (ctx.chat as any).id;
+        const albumListToString = listOfAlbumsAsString(id)
+        if(albumListToString.length == 0){
+            await ctx.reply("Non hai album")
+            await undo(ctx)
+            return;
+        }
+        else {
+            await ctx.reply(albumListToString)
+        }
     }
 
     private _prepareCreateAlbumScene(): Scenes.WizardScene<Scenes.WizardContext> {

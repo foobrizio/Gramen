@@ -34,10 +34,8 @@ export async function sendInsurance(ctx: Context){
     if(fs.existsSync(pdfPath)){
         let document = path.basename(pdfPath)
         await ctx.replyWithDocument({source: fs.createReadStream(pdfPath), filename: document}, {caption:"Ecco la tua assicurazione!"})
-        //bot.telegram.sendDocument(chatId, document);
     }
     else{
         await ctx.reply("Il documento non è stato trovato");
-        //bot.telegram.sendMessage(chatId, "Il documento non è stato trovato");
     }
 }

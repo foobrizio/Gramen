@@ -5,6 +5,7 @@ import {InlineKeyboardMarkup} from "@telegraf/types";
 import {ModuleHandler} from "./moduleHandler";
 import config from "../util/config";
 import {ActiveBotCommand} from "./model/ActiveBotCommand";
+import logger from "../util/logger";
 
 class BotManager{
 
@@ -50,7 +51,10 @@ class BotManager{
             {
                 command: "list_commands",
                 description: "Lists every command included on a specific module",
-                executedFunction: async (ctx) => await ctx.scene.enter(this.listCommandsSceneName)
+                executedFunction: async (ctx) => {
+                    logger.info(`COMMAND: list_commands -> ${ctx}`)
+                    await ctx.scene.enter(this.listCommandsSceneName)
+                }
             }
         ]
     }
@@ -108,6 +112,7 @@ class BotManager{
 
     // region COMMANDS
     private async _start_test(ctx: Scenes.WizardContext){
+        logger.info(`COMMAND: Start_test -> ${ctx}`)
         let servMgr = getServiceManager()
         let servName = 'Test'
         let chatId = ctx.chat? ctx.chat.id as number : 0;
@@ -131,6 +136,7 @@ class BotManager{
     }
 
     private async _stop(ctx: Scenes.WizardContext){
+        logger.info(`COMMAND: Stop -> ${ctx}`)
         let subMgr = getServiceManager()
         let chatId: number = (ctx.chat as any).id;
         if(subMgr.hasRunningElements(chatId)){
@@ -153,6 +159,7 @@ class BotManager{
     }
 
     private async _hello(ctx: Scenes.WizardContext){
+        logger.info(`COMMAND: Hello -> ${ctx}`)
         await ctx.reply("Hi, "+(ctx.message as any).from.first_name)
     }
     //endregion

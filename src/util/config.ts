@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import logger from "./logger";
 
 const configPath = path.resolve(__dirname, '../../config.json');
 
@@ -14,7 +15,7 @@ function readConfig(): BotConfig {
         const data: string = fs.readFileSync(configPath, 'utf8');
         return JSON.parse(data) as BotConfig;
     } catch (err: any) {
-        console.error('Error reading config file:', err.message);
+        logger.error(`${err}`)
         return {
             bot_token: ""
         };
