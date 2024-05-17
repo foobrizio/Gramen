@@ -1,6 +1,8 @@
 import 'fs'
 import * as fs from "fs";
 import moment from "moment";
+import logger from "../../util/logger";
+import pdf from "pdf-parse"
 
 
 export class PdfChecker{
@@ -9,7 +11,7 @@ export class PdfChecker{
 
     constructor() {
         const constants = require('./constants.json')
-        this.docPath = constants.docPath
+        this.docPath = `${constants.root}/${constants.docPath}/certificato_assicurazione.pdf`
     }
 
     deleteOldFile(){
@@ -20,14 +22,25 @@ export class PdfChecker{
         return fs.existsSync(this.docPath)
     }
 
-    isInsuranceValid():boolean {
-        //TODO: Implementare questa funzione
-        return false;
+    async isInsuranceValid(): Promise<boolean> {
+        const expirationDate = await this.extractExpirationDate()
+        return moment().toDate() < expirationDate
     }
 
-    extractExpirationDate(text: string):Date{
-        //TODO: Implementare questa funzione
-        let yesterday = moment().subtract(1, 'day').toDate();
-        return yesterday;
+    async extractExpirationDate():Promise<Date>{
+        const dataBuffer = fs.readFileSync(this.docPath)
+        try{
+            const data = await pdf(dataBuffer)
+            let rows = data.text.split('\n')
+            const dateRow = rows[rows.indexOf('DayMonthYearDayMonthYear')+1]
+            const dateParts = dateRow.split(' ').filter(x => x.length > 0)
+            const day = parseInt(dateParts[3]);
+            const month = parseInt(dateParts[4]);
+            const year = parseInt(dateParts[5]);
+            return new Date(year, month-1, day)
+        }catch(error){
+            logger.error('pdfChecker.extractExpirationDate',error)
+        }
+        return moment().subtract(1, 'day').toDate();
     }
 }

@@ -48,6 +48,5 @@ The developer can develop its own modules and increase the number of commands th
 
 ## TODO LIST:
 * Limited access to users for specific commands or modules
-* Logs
 * Photo album with separated folders for each user 
   * -> Weird bug on add_photos_to_album after the 2nd time

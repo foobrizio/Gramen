@@ -6,15 +6,17 @@ import {Context} from "telegraf";
 import {UnipolApiStrategy} from "./strategy/unipolApiStrategy";
 
 export async function checkInsurance(ctx: Context){
-    if(_checkDaScaricare()){
+    if(await _checkDaScaricare()){
         await _download()
         await sendInsurance(ctx)
     }
 }
 
-function _checkDaScaricare(){
+async function _checkDaScaricare(){
     let pdfChecker = new PdfChecker()
-    return !pdfChecker.exists() || !pdfChecker.isInsuranceValid()
+    const exists = pdfChecker.exists();
+    const isValid = await pdfChecker.isInsuranceValid()
+    return !exists || !isValid
 }
 
 async function _download(){

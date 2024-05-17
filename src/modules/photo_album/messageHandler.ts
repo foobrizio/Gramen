@@ -93,7 +93,7 @@ export class MessageHandler implements IMessageHandler{
                     await ctx.reply("Inserire nome del nuovo album")
                     return ctx.wizard.next()
                 }catch(error: any){
-                    console.error( error)
+                    logger.error(`photo_album.createAlbumSceneName.step1 -> ${error}`)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     return ctx.scene.leave()
                 }
@@ -105,7 +105,7 @@ export class MessageHandler implements IMessageHandler{
                     await ctx.reply("Inserire percorso cartella in cui inserire il nuovo album")
                     return ctx.wizard.next()
                 }catch(error: any){
-                    console.error( error)
+                    logger.error(`photo_album.createAlbumSceneName.step2 -> ${error}`)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     return ctx.scene.leave()
                 }
@@ -135,7 +135,7 @@ export class MessageHandler implements IMessageHandler{
                         return await ctx.scene.leave()
                     }
                 }catch(error: any){
-                    console.error( error)
+                    logger.error(`photo_album.createAlbumSceneName.step3 -> ${error}`)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     return ctx.scene.leave()
                 }
@@ -147,7 +147,7 @@ export class MessageHandler implements IMessageHandler{
                     //TODO: Non siamo attualmente in grado di inviare un unico messaggio per l'intero mediaGroup
                     //await ctx.reply("Salvataggio completato")
                 }catch(error){
-                    console.error(error)
+                    logger.error(`photo_album.createAlbumSceneName.step4 -> ${error}`)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     fs.rmSync(completePath, {recursive: true, force: true})
                     if(subFolderWasCreated){
@@ -166,17 +166,19 @@ export class MessageHandler implements IMessageHandler{
         return new Scenes.WizardScene<Scenes.WizardContext>(
             this.addPhotosSceneName,
             async (ctx) => {
+                // STEP 1
                 await setUndoCommand(ctx)
                 try{
                     await this._viewAlbumChoice(ctx, "In quale album vuoi aggiungere le nuove foto?")
                     return ctx.wizard.next()
                 }catch(error: any){
-                    console.error(error)
+                    logger.error(`photo_album.addPhotosScene.step1 -> ${error}`)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     await ctx.scene.leave()
                 }
             },
             async(ctx) => {
+                // STEP 2
                 try{
                     album_name = (ctx.message as any).text
                     const constants = require('./constants.json')
@@ -192,19 +194,19 @@ export class MessageHandler implements IMessageHandler{
                     }
 
                 }catch(error: any){
-                    console.error( error)
+                    logger.error(`photo_album.addPhotosScene.step2 -> ${error}`)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     await ctx.scene.leave()
                 }
-
             },
             async(ctx) => {
+                // STEP 3
                 try{
                     this._savePhoto(complete_path, ctx)
                     await ctx.reply("Inserimento in corso")
                     return await ctx.scene.leave()
                 }catch(error: any){
-                    console.error( error)
+                    logger.error(`photo_album.addPhotosScene.step3 -> ${error}`)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     await ctx.scene.leave()
                 }
@@ -216,18 +218,20 @@ export class MessageHandler implements IMessageHandler{
         return new Scenes.WizardScene<Scenes.WizardContext>(
             this.getAlbumSceneName,
             async (ctx) => {
+                // STEP 1
                 await setUndoCommand(ctx)
                 try{
                     await this._viewAlbumChoice(ctx, "Quale album vuoi scaricare?")
                     return ctx.wizard.next()
                 }catch(error: any){
-                    console.error( error)
+                    logger.error(`photo_album.getAlbumScene.step1 -> ${error}`)
                     await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
                     return ctx.scene.leave()
                 }
 
             },
             async(ctx) => {
+                // STEP 2
                 try{
                     await ctx.editMessageReplyMarkup(undefined);
                     let album_name = (ctx.update as any).callback_query?.data;
@@ -254,7 +258,7 @@ export class MessageHandler implements IMessageHandler{
                         await ctx.replyWithMediaGroup(innerArray)
                     }
                 }catch(error: any){
-                    console.error( error)
+                    logger.error(`photo_album.getAlbumScene.step2 -> ${error}`)
                     await ctx.reply('Si è verificato un errore durante l\'esecuzione del comando')
                 }
                 return ctx.scene.leave()

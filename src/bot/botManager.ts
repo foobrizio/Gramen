@@ -252,7 +252,6 @@ class BotManager{
                 //STEP 2: Riceviamo la risposta ed inviamo la lista dei comandi di quel modulo
                 await ctx.editMessageReplyMarkup(undefined);
                 let chosenServiceName: string = (ctx.update as any).callback_query?.data;
-                console.log('chosenServiceName:', chosenServiceName)
                 let chatId = ctx.chat?.id as number
                 let serviceName = this.subMgr.getServicePair(chatId, chosenServiceName)
                 await this.subMgr.unsubscribe(ctx, serviceName);

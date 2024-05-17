@@ -58,10 +58,9 @@ export class UnipolApiStrategy{
                 let outputPath = this.constants.root+"/"+this.constants.docPath+"/certificato_assicurazione.pdf"
                 fs.writeFile(outputPath, buff, (err) => {
                     if (err) {
-                        console.error('Errore nel salvataggio del file:', err);
+                        logger.error('unipolApiStrategy.savePdfFile', err);
                         reject(err);
                     } else {
-                        console.log('File salvato correttamente:', outputPath);
                         resolve(outputPath);
                     }
                 });

@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import {InputMediaPhoto} from "telegraf/types";
 import {SplitResult} from "./model/SplitResult";
+import logger from "../../util/logger";
 
 
 // region listAlbum
@@ -75,7 +76,7 @@ export function smartSplitting(array: string[]): SplitResult{
             tooBig = true;
             ignoredPhotos++;
             //throw new Error("One photo is too large to be handled. Its size overcomes 10MB")
-            console.log("Una foto è stata ignorata. La sua dimensione supera 10MB")
+            logger.warn("Una foto è stata ignorata. La sua dimensione supera 10MB")
         }
         // STEP 2) Verify if the chunk has reached the maximum dimension
         if(dimensionMB + chunkDimension >= 50){
