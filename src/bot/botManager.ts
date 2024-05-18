@@ -62,16 +62,21 @@ class BotManager{
                     logger.info(`COMMAND: list_commands -> ${ctx}`)
                     await ctx.scene.enter(this.listCommandsSceneName)
                 }
+            },
+            {
+                command: "my_services",
+                description: "Lists the active services of the user",
+                permission: "all",
+                executedFunction: async (ctx) => await this._listServices(ctx)
             }
         ]
     }
 
     async loadFunctions() {
-        let mh = new ModuleHandler()
         // STEP 1) Let's prepare scenes
-        await this._activateScenes(mh)
+        await this._activateScenes()
         // STEP 2) let's activate commands
-        await this._activateCommands(mh)
+        await this._activateCommands()
     }
 
     async reloadCommands(ctx: Context){
@@ -177,7 +182,7 @@ class BotManager{
 
     // region COMMANDS
 
-    private async _activateCommands(mh: ModuleHandler){
+    private async _activateCommands(){
         this._createDefaultCommands()
         const commandList = await this.getCommandList()
         await this.bot.telegram.setMyCommands(commandList)
@@ -240,11 +245,26 @@ class BotManager{
         logger.info(`COMMAND: Hello -> ${ctx}`)
         await ctx.reply("Hi, "+(ctx.message as any).from.first_name)
     }
+
+    private async _listServices(ctx: Scenes.WizardContext){
+        const userId = ctx.from?.id as number;
+        const runningElements = this.subMgr.getRunningElements(userId);
+        if(runningElements.length == 0){
+            await ctx.reply("Non hai servizi attivi");
+            return;
+        }
+        let serviceAnswer = "";
+        runningElements.forEach((service, index) => {
+            serviceAnswer += `${index+1}) ${service.serviceName}\n`
+        })
+        await ctx.reply(serviceAnswer)
+    }
     //endregion
 
     // region SCENES
 
-    private async _activateScenes(mh: ModuleHandler){
+    private async _activateScenes(){
+        let mh = new ModuleHandler()
         let moduleScenes = await mh.prepareCommandScenes()
         let allScenes = this.sceneList.concat(moduleScenes)
         const stage = new Scenes.Stage<Scenes.WizardContext>(allScenes)
@@ -294,7 +314,8 @@ class BotManager{
                 let moduleCommands = await mh.getCommandsOfModule(chosenModule)
                 let commandsDescription = "";
                 moduleCommands.forEach(botCommand => {
-                    commandsDescription += "/"+botCommand.command+": "+botCommand.description+"\n"
+                    //commandsDescription += "/"+botCommand.command+": "+botCommand.description+"\n"
+                    commandsDescription += `/${botCommand.command}: ${botCommand.description}\n`
                 })
                 await ctx.reply(commandsDescription)
                 await this.reloadCommands(ctx)

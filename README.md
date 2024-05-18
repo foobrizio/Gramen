@@ -44,9 +44,10 @@ The developer can develop its own modules and increase the number of commands th
 1. Possibility to activate/ stop threads that execute commands at specific intervals;
 2. Possibility to add custom modules;
 3. Log functionality included and available for developers;
-3. Insurance module for UnipolSai: the service downloads the new insurance whenever the old one is expired;
-4. PhotoAlbum module: you can create your own drive, add new albums and photos and download existing ones;
+4. Possibility to implement commands enabled for a limited number of users;
+5. Insurance module for UnipolSai: the service downloads the new insurance whenever the old one is expired; 
+6. PhotoAlbum module: you can create your own drive, add new albums and photos and download existing ones;
 
 ## TODO LIST:
 * Photo album with separated folders for each user 
-  * -> Weird bug on add_photos_to_album after the 2nd time
+  * -> Weird bug on add_photos_to_album and get_album after the 2nd time
