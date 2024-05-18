@@ -43,6 +43,7 @@ The developer can develop its own modules and increase the number of commands th
 ## Implemented functionalities:
 1. Possibility to activate/ stop threads that execute commands at specific intervals;
 2. Possibility to add custom modules;
+3. Log functionality included and available for developers;
 3. Insurance module for UnipolSai: the service downloads the new insurance whenever the old one is expired;
 4. PhotoAlbum module: you can create your own drive, add new albums and photos and download existing ones;
 

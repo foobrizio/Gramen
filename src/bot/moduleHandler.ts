@@ -5,6 +5,7 @@ import {Scenes} from "telegraf";
 import {enableUndoForScenes, getBot} from "./botManager";
 import {ActiveBotCommand} from "./model/ActiveBotCommand";
 import logger from "../util/logger";
+import {ActiveBotCommandDictionary} from "./model/ActiveBotCommandDictionary";
 
 export class ModuleHandler{
 
@@ -28,19 +29,20 @@ export class ModuleHandler{
         return mh.descriptionMapping()
     }
 
-    async activateCommands(): Promise<ActiveBotCommand[]>{
-        let cmdList: ActiveBotCommand[] = []
+    async activateCommands(): Promise<ActiveBotCommandDictionary>{
+        let cmdDictionary: ActiveBotCommandDictionary = {}
         // let config = require('../../config.json')
         for (const module of this._discoveredModules) {
             //let myModule = require(potentialModulePath)
             //console.log(myModule)
             let mh = await this.getMessageHandler(module)
             let activeBotCommands =mh.descriptionMapping()
-            cmdList = cmdList.concat(activeBotCommands)
+            //cmdList = cmdList.concat(activeBotCommands)
+            cmdDictionary[module] = activeBotCommands
             this.applyCommands(activeBotCommands)
             //mh.attachCommands(getBot())
         }
-        return cmdList
+        return cmdDictionary
     }
 
     applyCommands(activeBotCommands: ActiveBotCommand[]){

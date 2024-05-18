@@ -6,6 +6,7 @@ import {ModuleHandler} from "./moduleHandler";
 import config from "../util/config";
 import {ActiveBotCommand} from "./model/ActiveBotCommand";
 import logger from "../util/logger";
+import {ActiveBotCommandDictionary} from "./model/ActiveBotCommandDictionary";
 
 class BotManager{
 
@@ -14,12 +15,14 @@ class BotManager{
     private readonly listCommandsSceneName = "bot.list_commands_scene";
     private readonly stopServiceSceneName = "bot.stop_service_scene";
     private sceneList: Scenes.WizardScene<Scenes.WizardContext>[] = [];
+    private botCommandDictionary: ActiveBotCommandDictionary = {}
 
 
     constructor() {
         this._bot = new Telegraf<Scenes.WizardContext>(config.bot_token);
         this._subMgr = new ServiceManager();
         this._initializeManager()
+
     }
 
     //region PUBLIC METHODS
@@ -65,14 +68,14 @@ class BotManager{
         await this._activateScenes(mh)
         // STEP 2) let's activate commands
         await this._activateCommands(mh)
+        console.log(this.botCommandDictionary)
     }
 
     async reloadCommands(ctx: Context){
-        const mh = new ModuleHandler()
-        let moduleCommands = await mh.activateCommands()
-        let commandList = this.getDefaultCommands()
-        commandList = commandList.concat(moduleCommands)
-        await this.bot.telegram.setMyCommands(commandList,
+
+        let totalList = await this.getCommandList()
+        //commandList = commandList.concat(moduleCommands)
+        await this.bot.telegram.setMyCommands(totalList,
             {
                 scope: {
                     type: "chat",
@@ -81,20 +84,73 @@ class BotManager{
             });
     }
 
+    async getCommandList(){
+        const mh = new ModuleHandler()
+        const commandList = this.getDefaultCommands()
+        let externalModulesDictionary = await mh.activateCommands()
+        this.botCommandDictionary['core'] = commandList;
+        let totalList: ActiveBotCommand[] = commandList
+        for(let key in externalModulesDictionary){
+            let moduleCommands = externalModulesDictionary[key]
+            this.botCommandDictionary[key] = moduleCommands
+            totalList.concat(moduleCommands)
+        }
+        return totalList;
+    }
+
     //endregion
 
     //region PRIVATE METHODS
     private _initializeManager(){
         this._prepareDefaultCommandScenes()
         this.bot.use(session())
+        this._prepareInterceptor()
+    }
+
+    /**
+     * L'interceptor serve per verificare che l'utente abbia i permessi per eseguire il comando richiesto.
+     * Se non è un utente autorizzato, la sua richiesta viene bloccata
+     * @private
+     */
+    private _prepareInterceptor(){
+        this.bot.use(async (ctx, next) => {
+            if (ctx.updateType === 'message' && (ctx.update as any).message.text) {
+
+                const userId = ctx.from?.id//968716483
+                const command = (ctx.update as any).message.text;
+                // Verifica se il messaggio è un comando
+                if (command.startsWith('/')) {
+                    console.log(`Intercettato comando: ${command}`);
+
+                    // Esegui le operazioni che desideri qui
+                    //const shouldProceed = checkUserPermissions(userId, command);
+                    const shouldProceed = false
+
+                    if (!shouldProceed) {
+                        // Non chiamare next() per interrompere l'esecuzione del comando
+                        await ctx.reply('Questo comando è stato bloccato dall\'interceptor.');
+                        return;
+                    }
+                }
+            }
+            await next();
+        });
     }
 
 
+
+
+    async _sendMessage(ctx: Context) {
+        await ctx.reply('Messaggio periodico ogni 4 secondi.');
+    }
+
+    //endregion
+
+    // region COMMANDS
+
     private async _activateCommands(mh: ModuleHandler){
         this._createDefaultCommands()
-        let moduleCommands = await mh.activateCommands()
-        let commandList = this.getDefaultCommands()
-        commandList = commandList.concat(moduleCommands)
+        const commandList = await this.getCommandList()
         await this.bot.telegram.setMyCommands(commandList)
     }
 
@@ -104,13 +160,6 @@ class BotManager{
         })
     }
 
-    async _sendMessage(ctx: Context) {
-        await ctx.reply('Messaggio periodico ogni 4 secondi.');
-    }
-
-    //endregion
-
-    // region COMMANDS
     private async _start_test(ctx: Scenes.WizardContext){
         logger.info(`COMMAND: Start_test -> ${ctx}`)
         let servMgr = getServiceManager()

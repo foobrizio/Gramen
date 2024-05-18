@@ -1,4 +1,4 @@
-import {PdfChecker} from "./pdfChecker";
+import {PdfChecker} from "./util/pdfChecker";
 import {DriverStrategy} from "./strategy/driverStrategy";
 import * as path from 'path';
 import * as fs from "fs";

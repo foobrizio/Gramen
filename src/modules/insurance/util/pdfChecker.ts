@@ -1,7 +1,7 @@
 import 'fs'
 import * as fs from "fs";
 import moment from "moment";
-import logger from "../../util/logger";
+import logger from "../../../util/logger";
 import pdf from "pdf-parse"
 
 
@@ -10,7 +10,7 @@ export class PdfChecker{
     docPath: string
 
     constructor() {
-        const constants = require('./constants.json')
+        const constants = require('../constants.json')
         this.docPath = `${constants.root}/${constants.docPath}/certificato_assicurazione.pdf`
     }
 
