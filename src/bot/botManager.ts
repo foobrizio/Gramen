@@ -95,7 +95,7 @@ class BotManager{
         for(let key in externalModulesDictionary){
             let moduleCommands = externalModulesDictionary[key]
             this.botCommandDictionary[key] = moduleCommands
-            totalList.concat(moduleCommands)
+            totalList = totalList.concat(moduleCommands)
         }
         return totalList;
     }
@@ -118,8 +118,7 @@ class BotManager{
     private _prepareInterceptor(){
         this.bot.use(async (ctx, next) => {
             if (ctx.updateType === 'message' && (ctx.update as any).message.text) {
-
-                const userId = ctx.from?.id//128314363
+                const userId = ctx.from?.id
                 let command = (ctx.update as any).message.text;
                 if(!userId){
                     logger.warn(`Message received by a user without id. Command: ${command}, from: ${ctx.from}`)
@@ -129,10 +128,9 @@ class BotManager{
                 // Verifica se il messaggio è un comando
                 if (command.startsWith('/')) {
                     command = command.substring(1)
-                    if(command !== "start" || command !== "undo"){
+                    if(command !== "start" && command !== "undo"){
                         // Esegui le operazioni che desideri qui
                         const shouldProceed = this._checkUserPermissions(userId, command);
-
                         if (!shouldProceed) {
                             // Non chiamare next() per interrompere l'esecuzione del comando
                             await ctx.reply('Non hai i permessi per usare questo comando.');
@@ -258,6 +256,7 @@ class BotManager{
         let listAlbumScene: Scenes.WizardScene<Scenes.WizardContext> = this._prepareListCommandsScene()
         let stopServiceScene: Scenes.WizardScene<Scenes.WizardContext> = this._prepareStopServiceScene()
         this.sceneList = [listAlbumScene, stopServiceScene];
+        enableUndoForScenes(this.sceneList)
     }
 
     private _prepareListCommandsScene(): Scenes.WizardScene<Scenes.WizardContext>{
@@ -298,6 +297,7 @@ class BotManager{
                     commandsDescription += "/"+botCommand.command+": "+botCommand.description+"\n"
                 })
                 await ctx.reply(commandsDescription)
+                await this.reloadCommands(ctx)
                 return await ctx.scene.leave()
             }
         );
@@ -335,14 +335,13 @@ class BotManager{
                 let chatId = ctx.chat?.id as number
                 let serviceName = this.subMgr.getServicePair(chatId, chosenServiceName)
                 await this.subMgr.unsubscribe(ctx, serviceName);
+                await this.reloadCommands(ctx)
                 return await ctx.scene.leave()
             }
         );
     }
 
     //endregion
-
-
 }
 
 

@@ -30,12 +30,13 @@ export class MessageHandler implements IMessageHandler{
     }
 
     async startInsurance(ctx: Context){
-        logger.info(`COMMAND: Start insurance -> ${ctx}`)
+        let userName = ctx.from?.first_name as string;
+        let userId = ctx.from?.id as number;
+        let chatId = ctx.chat?.id as number;
+        logger.info(`COMMAND: Start insurance -> userId:${userId}`)
         await ctx.reply("Servizio Assicurazione attivato")
         let servMgr = getServiceManager();
 
-        let userName = ctx.from?.first_name as string;
-        let chatId = ctx.chat?.id as number;
         if(!servMgr.isSubscribed(chatId, this.serviceName)){
             // Possiamo far partire la nuova sottoscrizione
             await checkInsurance(ctx);
