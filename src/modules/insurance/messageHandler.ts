@@ -16,6 +16,7 @@ export class MessageHandler implements IMessageHandler{
             {
                 command:'start_insurance',
                 description:'Activate the insurance service',
+                permission: 'private',
                 executedFunction: async (ctx) => {
                     await this.startInsurance(ctx)
                 }

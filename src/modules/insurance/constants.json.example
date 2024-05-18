@@ -6,5 +6,8 @@
     "pin": "",
     "token": "",
     "ibm-client-id": "",
-    "ibm-client-secret": ""
+    "ibm-client-secret": "",
+    "permissions": {
+        "groupName": []
+    }
 }

@@ -39,21 +39,25 @@ class BotManager{
             {
                 command: "hello",
                 description:"Sends a welcome message",
+                permission: 'all',
                 executedFunction: async (ctx) => await this._hello(ctx)
             },
             {
                 command: "start_test",
                 description:"Activate the test service. Just for didactic purpose",
+                permission: 'all',
                 executedFunction: async (ctx) => await this._start_test(ctx)
             },
             {
                 command: "stop",
                 description:"Stops an active service.",
+                permission: 'all',
                 executedFunction: async (ctx) => await this._stop(ctx)
             },
             {
                 command: "list_commands",
                 description: "Lists every command included on a specific module",
+                permission: 'all',
                 executedFunction: async (ctx) => {
                     logger.info(`COMMAND: list_commands -> ${ctx}`)
                     await ctx.scene.enter(this.listCommandsSceneName)
@@ -68,13 +72,11 @@ class BotManager{
         await this._activateScenes(mh)
         // STEP 2) let's activate commands
         await this._activateCommands(mh)
-        console.log(this.botCommandDictionary)
     }
 
     async reloadCommands(ctx: Context){
 
         let totalList = await this.getCommandList()
-        //commandList = commandList.concat(moduleCommands)
         await this.bot.telegram.setMyCommands(totalList,
             {
                 scope: {
@@ -107,6 +109,7 @@ class BotManager{
         this._prepareInterceptor()
     }
 
+    // region INTERCEPTOR
     /**
      * L'interceptor serve per verificare che l'utente abbia i permessi per eseguire il comando richiesto.
      * Se non è un utente autorizzato, la sua richiesta viene bloccata
@@ -116,20 +119,25 @@ class BotManager{
         this.bot.use(async (ctx, next) => {
             if (ctx.updateType === 'message' && (ctx.update as any).message.text) {
 
-                const userId = ctx.from?.id//968716483
-                const command = (ctx.update as any).message.text;
+                const userId = ctx.from?.id//128314363
+                let command = (ctx.update as any).message.text;
+                if(!userId){
+                    logger.warn(`Message received by a user without id. Command: ${command}, from: ${ctx.from}`)
+                    await ctx.reply('Questo comando è stato bloccato dall\'interceptor.');
+                    return;
+                }
                 // Verifica se il messaggio è un comando
                 if (command.startsWith('/')) {
-                    console.log(`Intercettato comando: ${command}`);
+                    command = command.substring(1)
+                    if(command !== "start" || command !== "undo"){
+                        // Esegui le operazioni che desideri qui
+                        const shouldProceed = this._checkUserPermissions(userId, command);
 
-                    // Esegui le operazioni che desideri qui
-                    //const shouldProceed = checkUserPermissions(userId, command);
-                    const shouldProceed = false
-
-                    if (!shouldProceed) {
-                        // Non chiamare next() per interrompere l'esecuzione del comando
-                        await ctx.reply('Questo comando è stato bloccato dall\'interceptor.');
-                        return;
+                        if (!shouldProceed) {
+                            // Non chiamare next() per interrompere l'esecuzione del comando
+                            await ctx.reply('Non hai i permessi per usare questo comando.');
+                            return;
+                        }
                     }
                 }
             }
@@ -137,6 +145,29 @@ class BotManager{
         });
     }
 
+    private _checkUserPermissions(userId: number, command: string): boolean {
+        // STEP 1: Recuperare le permissions associate al command e il modulo di riferimento
+        for(const key in this.botCommandDictionary){
+            let commandFound = this.botCommandDictionary[key].filter(x => x.command === command)
+            if(commandFound.length == 1){
+                // L'abbiamo trovato
+                return this._checkPermissionForCommand(key, commandFound[0], userId)
+            }
+        }
+        logger.warn(`Command ${command} was not found during check of permissions for user ${userId}`)
+        return false;
+    }
+
+    private _checkPermissionForCommand(moduleName: string, commandData: ActiveBotCommand, userId: number): boolean{
+        if(!commandData.permission || commandData.permission === 'all'){
+            // I permessi non sono dichiarati oppure il comando è pubblico
+            return true;
+        }
+        const mh = new ModuleHandler();
+        return mh.checkPermissionForModule(moduleName, commandData.permission, userId);
+    }
+
+    // endregion
 
 
 

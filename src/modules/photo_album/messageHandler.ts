@@ -21,6 +21,7 @@ export class MessageHandler implements IMessageHandler{
             {
                 command: "create_album",
                 description: "Creates a new collection of photos",
+                permission: 'all',
                 executedFunction: async (ctx) => {
                     logger.info(`COMMAND: create_album -> ${ctx}`)
                     await ctx.scene.enter(this.createAlbumSceneName)
@@ -29,6 +30,7 @@ export class MessageHandler implements IMessageHandler{
             {
                 command: "add_photos_to_album",
                 description: "Adds new photos to an album",
+                permission: 'all',
                 executedFunction: async (ctx) => {
                     logger.info(`COMMAND: add_photos_to_album -> ${ctx}`)
                     await ctx.scene.enter(this.addPhotosSceneName)
@@ -37,6 +39,7 @@ export class MessageHandler implements IMessageHandler{
             {
                 command: "list_album",
                 description: "Lists all the collection of photo albums",
+                permission: 'all',
                 executedFunction: async (ctx) => {
                     await this.listAlbumCommand(ctx)
                 }
@@ -44,6 +47,7 @@ export class MessageHandler implements IMessageHandler{
             {
                 command: "get_album",
                 description: "Returns all the photos of a specific album",
+                permission: 'all',
                 executedFunction: async (ctx) => {
                     logger.info(`COMMAND: get_album -> ${ctx}`)
                     await ctx.scene.enter(this.getAlbumSceneName)

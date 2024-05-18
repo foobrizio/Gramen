@@ -78,8 +78,16 @@ export class ModuleHandler{
     }
 
     private async getMessageHandler(module: string): Promise<IMessageHandler>{
-        let path = "../"+this._modulesDir+"/"+module+"/messageHandler"
+        let path = `../${this._modulesDir}/${module}/messageHandler`
         let mod = await import(path)
         return new mod.MessageHandler() as IMessageHandler
+    }
+
+    checkPermissionForModule(module: string, group: string, userId: number): boolean{
+        let modulePath = `../${this._modulesDir}/${module}/constants.json`;
+        const moduleConstants = require(modulePath);
+        const permissionDictionary = moduleConstants.permissions;
+        const groupList: number[] = permissionDictionary[group]
+        return groupList? groupList.includes(userId) : false;
     }
 }
