@@ -48,6 +48,5 @@ The developer can develop its own modules and increase the number of commands th
 4. PhotoAlbum module: you can create your own drive, add new albums and photos and download existing ones;
 
 ## TODO LIST:
-* Limited access to users for specific commands or modules
 * Photo album with separated folders for each user 
   * -> Weird bug on add_photos_to_album after the 2nd time

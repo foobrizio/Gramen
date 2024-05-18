@@ -1,5 +1,5 @@
 import {Context, Scenes, Telegraf} from "telegraf";
-import {checkInsurance} from "./functions";
+import {checkInsurance, sendInsurance} from "./functions";
 import {IMessageHandler} from "../../bot/model/IMessageHandler";
 import {BotCommand} from "telegraf/types";
 import {getBot, getServiceManager} from "../../bot/botManager";
@@ -20,6 +20,14 @@ export class MessageHandler implements IMessageHandler{
                 executedFunction: async (ctx) => {
                     await this.startInsurance(ctx)
                 }
+            },
+            {
+                command:'get_insurance',
+                description:'Return the pdf with the current insurance',
+                permission: 'private',
+                executedFunction: async (ctx) => {
+                    await this.sendInsurance(ctx)
+                }
             }
             ]
     }
@@ -27,6 +35,12 @@ export class MessageHandler implements IMessageHandler{
     prepareScenes(): Scenes.WizardScene<Scenes.WizardContext>[] {
         // INFO: There are no scenes in this module
         return []
+    }
+
+    async sendInsurance(ctx: Context){
+        const userId = ctx.from?.id as number;
+        logger.info(`COMMAND: get_insurance -> userId: ${userId}`)
+        await sendInsurance(ctx)
     }
 
     async startInsurance(ctx: Context){
