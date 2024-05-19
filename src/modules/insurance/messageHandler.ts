@@ -2,7 +2,7 @@ import {Context, Scenes, Telegraf} from "telegraf";
 import {checkInsurance, sendInsurance} from "./functions";
 import {IMessageHandler} from "../../bot/model/IMessageHandler";
 import {BotCommand} from "telegraf/types";
-import {getBot, getServiceManager} from "../../bot/botManager";
+import {createService, getBot, getServiceManager} from "../../bot/botManager";
 import {WizardContext} from "telegraf/typings/scenes";
 import {ActiveBotCommand} from "../../bot/model/ActiveBotCommand";
 import logger from "../../util/logger";
@@ -43,12 +43,14 @@ export class MessageHandler implements IMessageHandler{
         await sendInsurance(ctx)
     }
 
-    async startInsurance(ctx: Context){
+    async startInsurance(ctx: Scenes.WizardContext){
         let userName = ctx.from?.first_name as string;
         let userId = ctx.from?.id as number;
         let chatId = ctx.chat?.id as number;
         logger.info(`COMMAND: Start insurance -> userId:${userId}`)
         await ctx.reply("Servizio Assicurazione attivato")
+        await createService(ctx, this.serviceName, 3600*24*1000, true, checkInsurance)
+        /*
         let servMgr = getServiceManager();
 
         if(!servMgr.isSubscribed(chatId, this.serviceName)){
@@ -63,6 +65,6 @@ export class MessageHandler implements IMessageHandler{
             });
         } else{
             await ctx.reply('Hai già attivato il servizio Assicurazione')
-        }
+        }*/
     }
 }

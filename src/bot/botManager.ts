@@ -7,6 +7,7 @@ import config from "../util/config";
 import {ActiveBotCommand} from "./model/ActiveBotCommand";
 import logger from "../util/logger";
 import {ActiveBotCommandDictionary} from "./model/ActiveBotCommandDictionary";
+import {checkInsurance} from "../modules/insurance/functions";
 
 class BotManager{
 
@@ -22,7 +23,6 @@ class BotManager{
         this._bot = new Telegraf<Scenes.WizardContext>(config.bot_token);
         this._subMgr = new ServiceManager();
         this._initializeManager()
-
     }
 
     //region PUBLIC METHODS
@@ -39,25 +39,21 @@ class BotManager{
             {
                 command: "hello",
                 description:"Sends a welcome message",
-                permission: 'all',
                 executedFunction: async (ctx) => await this._hello(ctx)
             },
             {
                 command: "start_test",
                 description:"Activate the test service. Just for didactic purpose",
-                permission: 'all',
                 executedFunction: async (ctx) => await this._start_test(ctx)
             },
             {
                 command: "stop",
                 description:"Stops an active service.",
-                permission: 'all',
                 executedFunction: async (ctx) => await this._stop(ctx)
             },
             {
                 command: "list_commands",
                 description: "Lists every command included on a specific module",
-                permission: 'all',
                 executedFunction: async (ctx) => {
                     logger.info(`COMMAND: list_commands -> ${ctx}`)
                     await ctx.scene.enter(this.listCommandsSceneName)
@@ -66,7 +62,6 @@ class BotManager{
             {
                 command: "my_services",
                 description: "Lists the active services of the user",
-                permission: "all",
                 executedFunction: async (ctx) => await this._listServices(ctx)
             }
         ]
@@ -201,7 +196,9 @@ class BotManager{
         let chatId = ctx.chat? ctx.chat.id as number : 0;
         if(chatId === 0)
             return;
-        if(servMgr.isSubscribed(chatId, servName)) {
+
+        await createService(ctx, servName, 4000, false, this._sendMessage)
+        /*if(servMgr.isSubscribed(chatId, servName)) {
             await ctx.reply('Il servizio è già attivo.');
             return;
         }
@@ -215,7 +212,7 @@ class BotManager{
         servMgr.subscribe(chatId, {
             intervalId: intervalId as NodeJS.Timeout,
             serviceName: servName
-        });
+        });*/
     }
 
     private async _stop(ctx: Scenes.WizardContext){
@@ -420,6 +417,34 @@ export async function setUndoCommand(ctx: Context){
                 chat_id: ctx.chat?.id || 0
             }
         })
+}
+
+/**
+ * This function starts a new service for a specific user
+ * @param ctx the Context received by the message
+ * @param serviceName the name of the service that has to be started. It uniquely identifies the service.
+ * @param interval the period (in milliseconds) between an execution and the next one
+ * @param runAtStart if true, the first execution is performed immediately
+ * @param executedFunction the function to be executed periodically
+ */
+export async function createService(ctx: Scenes.WizardContext, serviceName: string, interval: number, runAtStart: boolean, executedFunction: (ctx: Scenes.WizardContext) => Promise<void>){
+    let servMgr = getServiceManager();
+    let chatId = ctx.chat?.id as number;
+    if(!servMgr.isSubscribed(chatId, serviceName)){
+        // Possiamo far partire la nuova sottoscrizione
+        await ctx.reply(`Servizio ${serviceName} attivato`)
+        if(runAtStart)
+            await executedFunction(ctx);
+        let intervalId = setInterval( () => {
+            executedFunction(ctx)
+        }, interval)   //once a day
+        servMgr.subscribe(chatId, {
+            serviceName: serviceName,
+            intervalId: intervalId
+        });
+    } else{
+        await ctx.reply(`Hai già attivato il servizio ${serviceName}`)
+    }
 }
 
 //endregion

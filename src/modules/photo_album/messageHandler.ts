@@ -1,7 +1,7 @@
 import {IMessageHandler} from "../../bot/model/IMessageHandler";
 import {Scenes} from "telegraf";
 import {getPhotosFromAlbum, listOfAlbums, listOfAlbumsAsString, smartSplitting} from "./functions";
-import {enableUndoForScenes, getBot, setUndoCommand, undo} from "../../bot/botManager";
+import {enableUndoForScenes, setUndoCommand, undo} from "../../bot/botManager";
 import {InlineKeyboardMarkup} from "@telegraf/types";
 import * as fs from "fs";
 import * as https from "https"
