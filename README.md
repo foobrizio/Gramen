@@ -1,7 +1,7 @@
 # Gramen
 
 ## Introduction
-This project consists in a customizable Telegram bot which allows the developer to develop its own functionalities.
+***Gramen*** is a framework consisting in a customizable Telegram bot which allows the developer to develop its own functionalities.
 Currently, there are two already existing modules:
     1) Insurance download;
     2) Photo Album Manager.
