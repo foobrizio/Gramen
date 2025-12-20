@@ -6,7 +6,7 @@ import {InlineKeyboardMarkup} from "@telegraf/types";
 import * as fs from "fs";
 import * as https from "https"
 import {ActiveBotCommand} from "../../bot/model/ActiveBotCommand";
-import logger from "../../util/logger";
+import logger, { LogCommand } from "../../util/logger";
 import { stringify } from "../../util/stringify";
 
 
@@ -23,36 +23,25 @@ export class MessageHandler implements IMessageHandler{
                 command: "create_album",
                 description: "Creates a new collection of photos",
                 permission: 'all',
-                executedFunction: async (ctx) => {
-                    logger.info(`COMMAND: create_album -> ${stringify(ctx)}`)
-                    await ctx.scene.enter(this.createAlbumSceneName)
-                }
+                executedFunction: async (ctx) => this.createAlbumCommand(ctx)
             },
             {
                 command: "add_photos_to_album",
                 description: "Adds new photos to an album",
                 permission: 'all',
-                executedFunction: async (ctx) => {
-                    logger.info(`COMMAND: add_photos_to_album -> ${stringify(ctx)}`)
-                    await ctx.scene.enter(this.addPhotosSceneName)
-                }
+                executedFunction: async (ctx) => this.addPhotosToAlbumCommand(ctx)
             },
             {
                 command: "list_album",
                 description: "Lists all the collection of photo albums",
                 permission: 'all',
-                executedFunction: async (ctx) => {
-                    await this.listAlbumCommand(ctx)
-                }
+                executedFunction: async (ctx) => await this.listAlbumCommand(ctx)
             },
             {
                 command: "get_album",
                 description: "Returns all the photos of a specific album",
                 permission: 'all',
-                executedFunction: async (ctx) => {
-                    logger.info(`COMMAND: get_album -> ${stringify(ctx)}`)
-                    await ctx.scene.enter(this.getAlbumSceneName)
-                }
+                executedFunction: async (ctx) => this.getAlbumCommand(ctx)
             }
         ];
     }
@@ -67,12 +56,27 @@ export class MessageHandler implements IMessageHandler{
         return result
     }
 
+    @LogCommand()
+    async createAlbumCommand(ctx: Scenes.WizardContext){
+        await ctx.scene.enter(this.createAlbumSceneName)
+    }
+
+    @LogCommand()
+    async addPhotosToAlbumCommand(ctx: Scenes.WizardContext){
+        await ctx.scene.enter(this.addPhotosSceneName)
+    }
+
+    @LogCommand()
+    async getAlbumCommand(ctx: Scenes.WizardContext){
+        await ctx.scene.enter(this.getAlbumSceneName)
+    }
+
+    @LogCommand()
     async listAlbumCommand(ctx: Scenes.WizardContext){
-        logger.info(`COMMAND: list_album -> ${stringify(ctx)}`)
         const id = (ctx.chat as any).id;
         const albumListToString = listOfAlbumsAsString(id)
         if(albumListToString.length == 0){
-            await ctx.reply("Non hai album")
+            await ctx.reply("You have no albums")
             await undo(ctx)
             return;
         }
@@ -95,11 +99,11 @@ export class MessageHandler implements IMessageHandler{
                 // STEP 1
                 await setUndoCommand(ctx)
                 try{
-                    await ctx.reply("Inserire nome del nuovo album")
+                    await ctx.reply("Insert the name of the new album")
                     return ctx.wizard.next()
                 }catch(error: any){
                     logger.error(`photo_album.createAlbumSceneName.step1 -> ${error}`)
-                    await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
+                    await ctx.reply("An error occurred while executing the command")
                     return ctx.scene.leave()
                 }
             },
@@ -107,11 +111,11 @@ export class MessageHandler implements IMessageHandler{
                 // STEP 2
                 try{
                     album_name = (ctx.message as any).text
-                    await ctx.reply("Inserire percorso cartella in cui inserire il nuovo album")
+                    await ctx.reply("- Insert the folder path for the new album")
                     return ctx.wizard.next()
                 }catch(error: any){
                     logger.error(`photo_album.createAlbumSceneName.step2 -> ${error}`)
-                    await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
+                    await ctx.reply("An error occurred while executing the command")
                     return ctx.scene.leave()
                 }
             },
@@ -123,7 +127,7 @@ export class MessageHandler implements IMessageHandler{
                     idPath = constants.photo_folder+"/"+id;
                     superPath = idPath+"/"+path;
                     completePath = superPath+"/"+album_name
-                    await ctx.reply("Creazione di una nuova cartella in "+completePath+" in corso")
+                    await ctx.reply("Creating a new folder in "+completePath)
                     if(!fs.existsSync(completePath)){
                         if(!fs.existsSync(superPath)){
                             if(!fs.existsSync(idPath)){
@@ -133,15 +137,15 @@ export class MessageHandler implements IMessageHandler{
                             fs.mkdirSync(superPath)
                         }
                         fs.mkdirSync(completePath)
-                        await ctx.reply("La cartella è stata creata. Ora inserisci almeno una foto per renderla un album")
+                        await ctx.reply("The folder has been created. Now insert at least one photo to make it an album")
                         return ctx.wizard.next()
                     }else{
-                        await ctx.reply("La cartella esiste già")
+                        await ctx.reply("The folder already exists")
                         return await ctx.scene.leave()
                     }
                 }catch(error: any){
                     logger.error(`photo_album.createAlbumSceneName.step3 -> ${error}`)
-                    await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
+                    await ctx.reply("An error occurred while executing the command")
                     return ctx.scene.leave()
                 }
             },
@@ -153,7 +157,7 @@ export class MessageHandler implements IMessageHandler{
                     //await ctx.reply("Salvataggio completato")
                 }catch(error){
                     logger.error(`photo_album.createAlbumSceneName.step4 -> ${error}`)
-                    await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
+                    await ctx.reply("An error occurred while executing the command")
                     fs.rmSync(completePath, {recursive: true, force: true})
                     if(subFolderWasCreated){
                         fs.rmSync(superPath)
@@ -174,11 +178,11 @@ export class MessageHandler implements IMessageHandler{
                 // STEP 1
                 await setUndoCommand(ctx)
                 try{
-                    await this._viewAlbumChoice(ctx, "In quale album vuoi aggiungere le nuove foto?")
+                    await this._viewAlbumChoice(ctx, "In which album do you want to add the new photos?")
                     return ctx.wizard.next()
                 }catch(error: any){
                     logger.error(`photo_album.addPhotosScene.step1 -> ${error}`)
-                    await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
+                    await ctx.reply("An error occurred while executing the command")
                     await ctx.scene.leave()
                 }
             },
@@ -190,17 +194,17 @@ export class MessageHandler implements IMessageHandler{
                     const id = (ctx.chat as any).id
                     complete_path = constants.photo_folder+"/"+id+"/"+album_name;
                     if(fs.existsSync(complete_path)){
-                        await ctx.reply("Ora aggiungi le foto nell'album '"+album_name+"'");
+                        await ctx.reply("Now add the photos to the album '"+album_name+"'");
                         return ctx.wizard.next()
                     }
                     else{
-                        await ctx.reply("La cartella non esiste. Riprovare");
+                        await ctx.reply("The folder does not exist. Please try again");
                         return ctx.scene.leave()
                     }
 
                 }catch(error: any){
                     logger.error(`photo_album.addPhotosScene.step2 -> ${error}`)
-                    await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
+                    await ctx.reply("An error occurred while executing the command")
                     await ctx.scene.leave()
                 }
             },
@@ -208,11 +212,11 @@ export class MessageHandler implements IMessageHandler{
                 // STEP 3
                 try{
                     this._savePhoto(complete_path, ctx)
-                    await ctx.reply("Inserimento in corso")
+                    await ctx.reply("Inserting...")
                     return await ctx.scene.leave()
                 }catch(error: any){
                     logger.error(`photo_album.addPhotosScene.step3 -> ${error}`)
-                    await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
+                    await ctx.reply("An error occurred while executing the command")
                     await ctx.scene.leave()
                 }
             }
@@ -226,11 +230,11 @@ export class MessageHandler implements IMessageHandler{
                 // STEP 1
                 await setUndoCommand(ctx)
                 try{
-                    await this._viewAlbumChoice(ctx, "Quale album vuoi scaricare?")
+                    await this._viewAlbumChoice(ctx, "Which album do you want to download?")
                     return ctx.wizard.next()
                 }catch(error: any){
                     logger.error(`photo_album.getAlbumScene.step1 -> ${error}`)
-                    await ctx.reply("Si è verificato un errore durante l'esecuzione del comando")
+                    await ctx.reply("An error occurred while executing the command")
                     return ctx.scene.leave()
                 }
 
@@ -240,7 +244,7 @@ export class MessageHandler implements IMessageHandler{
                 try{
                     await ctx.editMessageReplyMarkup(undefined);
                     let album_name = (ctx.update as any).callback_query?.data;
-                    await ctx.reply("Hai selezionato l'album '"+album_name+"'");
+                    await ctx.reply("You have selected the album '"+album_name+"'");
                     let photos = getPhotosFromAlbum(album_name)
                     // We cannot send more than 10 photos in a single message, so we have to split our array
 
@@ -254,9 +258,9 @@ export class MessageHandler implements IMessageHandler{
                     let splitResult = smartSplitting(photos)
                     if(splitResult.ignoredPhotos > 0) {
                         if (splitResult.ignoredPhotos === 1)
-                            await ctx.reply(splitResult.ignoredPhotos + " foto non può essere inviata perchè pesa più di 10MB");
+                            await ctx.reply(splitResult.ignoredPhotos + " photo cannot be sent because it is larger than 10MB");
                         else
-                            await ctx.reply(splitResult.ignoredPhotos + " foto non possono essere inviate perchè pesano più di 10MB");
+                            await ctx.reply(splitResult.ignoredPhotos + " photos cannot be sent because they are larger than 10MB");
                     }
                     for(let i = 0; i< splitResult.array.length; i++){
                         let innerArray = splitResult.array[i];
@@ -264,7 +268,7 @@ export class MessageHandler implements IMessageHandler{
                     }
                 }catch(error: any){
                     logger.error(`photo_album.getAlbumScene.step2 -> ${error}`)
-                    await ctx.reply('Si è verificato un errore durante l\'esecuzione del comando')
+                    await ctx.reply("An error occurred while executing the command")
                 }
                 return ctx.scene.leave()
             }
@@ -305,7 +309,7 @@ export class MessageHandler implements IMessageHandler{
         let albums = listOfAlbums((ctx.chat as any).id)
         if( albums.length == 0){
             // Dobbiamo invocare l'undo + reloadCommand
-            await ctx.reply("Non hai album");
+            await ctx.reply("You have no albums");
             await undo(ctx)
             return;
         }

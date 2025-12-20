@@ -1,7 +1,7 @@
 import { InlineKeyboardMarkup } from "@telegraf/types";
 import { Context, Scenes, session, Telegraf } from "telegraf";
 import { WizardContext } from "telegraf/typings/scenes";
-import logger from "../util/logger";
+import logger, { LogCommand } from "../util/logger";
 import { stringify } from "../util/stringify";
 import { ActiveBotCommand } from "./model/ActiveBotCommand";
 import { ActiveBotCommandDictionary } from "./model/ActiveBotCommandDictionary";
@@ -41,33 +41,32 @@ class BotManager{
             {
                 command: "hello",
                 description:"Sends a welcome message",
-                executedFunction: async (ctx) => await this._hello(ctx)
+                executedFunction: async (ctx) => await this.helloCommand(ctx)
             },
             {
                 command: "start_test",
                 description:"Activate the test service. Just for didactic purpose",
-                executedFunction: async (ctx) => await this._start_test(ctx)
+                executedFunction: async (ctx) => await this.startTestCommand(ctx)
             },
             {
                 command: "stop",
                 description:"Stops an active service.",
-                executedFunction: async (ctx) => await this._stop(ctx)
+                executedFunction: async (ctx) => await this.stopCommand(ctx)
             },
             {
                 command: "list_commands",
                 description: "Lists every command included on a specific module",
-                executedFunction: async (ctx) => {
-                    logger.info(`COMMAND: list_commands -> ${stringify(ctx)}`)
-                    await ctx.scene.enter(this.listCommandsSceneName)
-                }
+                executedFunction: async (ctx) => await this.listCommandsCommand(ctx)
+                    
             },
             {
                 command: "my_services",
                 description: "Lists the active services of the user",
-                executedFunction: async (ctx) => await this._listServices(ctx)
+                executedFunction: async (ctx) => await this.listServicesCommand(ctx)
             }
         ]
     }
+    
 
     async loadFunctions() {
         // STEP 1) Let's prepare scenes
@@ -177,7 +176,7 @@ class BotManager{
 
     //endregion
 
-    // region COMMANDS
+    
 
     private async _activateCommands(){
         this._createDefaultCommands()
@@ -191,15 +190,17 @@ class BotManager{
         })
     }
 
-    private async _start_test(ctx: Scenes.WizardContext){
-        logger.info(`COMMAND: Start_test -> ${stringify(ctx)}`)
-        let servMgr = getServiceManager()
+    // region COMMANDS
+
+    @LogCommand()
+    private async startTestCommand(ctx: Scenes.WizardContext){
         let servName = 'Test'
         let chatId = ctx.chat? ctx.chat.id as number : 0;
         if(chatId === 0)
             return;
 
         await createService(ctx, servName, 4000, false, this._sendMessage)
+        //let servMgr = getServiceManager()
         /*if(servMgr.isSubscribed(chatId, servName)) {
             await ctx.reply('Il servizio è già attivo.');
             return;
@@ -217,8 +218,8 @@ class BotManager{
         });*/
     }
 
-    private async _stop(ctx: Scenes.WizardContext){
-        logger.info(`COMMAND: Stop -> ${stringify(ctx)}`)
+    @LogCommand()
+    private async stopCommand(ctx: Scenes.WizardContext){
         let subMgr = getServiceManager()
         let chatId: number = (ctx.chat as any).id;
         if(subMgr.hasRunningElements(chatId)){
@@ -240,12 +241,18 @@ class BotManager{
         }
     }
 
-    private async _hello(ctx: Scenes.WizardContext){
-        logger.info(`COMMAND: Hello -> ${stringify(ctx)}`)
+    @LogCommand()
+    private async listCommandsCommand(ctx: Scenes.WizardContext<Scenes.WizardSessionData>): Promise<void> {
+        await ctx.scene.enter(this.listCommandsSceneName)
+    }
+
+    @LogCommand()
+    private async helloCommand(ctx: Scenes.WizardContext){
         await ctx.reply("Hi, "+(ctx.message as any).from.first_name)
     }
 
-    private async _listServices(ctx: Scenes.WizardContext){
+    @LogCommand()
+    private async listServicesCommand(ctx: Scenes.WizardContext){
         const userId = ctx.from?.id as number;
         const runningElements = this.subMgr.getRunningElements(userId);
         if(runningElements.length == 0){

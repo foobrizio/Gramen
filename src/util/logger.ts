@@ -1,6 +1,7 @@
 import { createLogger, format, transports, Logger } from 'winston';
 import fs from 'fs';
 import path from 'path';
+import { stringify } from './stringify';
 const config = require("../../config.json")
 
 const logsDir = config?.logs_path || './logs/';
@@ -81,6 +82,35 @@ function getLogger(): Logger {
     return logger;
 }
 
+export function LogCommand() {
+    return function (
+        target: any,
+        propertyKey: string,
+        descriptor: PropertyDescriptor
+    ) {
+        const originalMethod = descriptor.value;
+        const className = target.constructor.name;
+        const methodName = propertyKey;
+        
+        // Converti createAlbumCommand -> create_album
+        const commandName = methodName
+            .replace(/Command$/, '')
+            .replace(/([A-Z])/g, '_$1')
+            .toLowerCase();
+
+        descriptor.value = async function (...args: any[]) {
+            const ctx = args[0];
+            logger.info(`COMMAND: ${commandName} -> ${stringify(ctx)}`, {
+                caller: `${className}.${methodName}`
+            });
+
+            return originalMethod.apply(this, args);
+        };
+
+        return descriptor;
+    };
+}
+
 export default {
     info: (message: string, ...meta: any[]) => {
         const caller = getCallerInfo();
@@ -99,3 +129,5 @@ export default {
         getLogger().debug(message, { caller, ...meta });
     }
 };
+
+

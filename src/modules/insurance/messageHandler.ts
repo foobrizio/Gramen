@@ -2,7 +2,7 @@ import { Context, Scenes } from "telegraf";
 import { createService } from "../../bot/botManager";
 import { ActiveBotCommand } from "../../bot/model/ActiveBotCommand";
 import { IMessageHandler } from "../../bot/model/IMessageHandler";
-import logger from "../../util/logger";
+import logger, { LogCommand } from "../../util/logger";
 import { checkInsurance, sendInsurance } from "./functions";
 
 export class MessageHandler implements IMessageHandler{
@@ -15,17 +15,13 @@ export class MessageHandler implements IMessageHandler{
                 command:'start_insurance',
                 description:'Activate the insurance service',
                 permission: 'private',
-                executedFunction: async (ctx) => {
-                    await this.startInsurance(ctx)
-                }
+                executedFunction: async (ctx) => await this.startInsuranceCommand(ctx)
             },
             {
                 command:'get_insurance',
                 description:'Return the pdf with the current insurance',
                 permission: 'private',
-                executedFunction: async (ctx) => {
-                    await this.sendInsurance(ctx)
-                }
+                executedFunction: async (ctx) => await this.sendInsuranceCommand(ctx)
             }
         ]
     }
@@ -35,22 +31,18 @@ export class MessageHandler implements IMessageHandler{
         return []
     }
 
-    async sendInsurance(ctx: Context){
+    @LogCommand()
+    async sendInsuranceCommand(ctx: Context){
         const userId = ctx.from?.id as number;
-        logger.info(`COMMAND: get_insurance -> userId: ${userId}`)
         await sendInsurance(ctx)
     }
 
-    async startInsurance(ctx: Scenes.WizardContext){
-        let userName = ctx.from?.first_name as string;
-        let userId = ctx.from?.id as number;
-        let chatId = ctx.chat?.id as number;
-        logger.info(`COMMAND: Start insurance -> userId:${userId}`)
+    @LogCommand()
+    async startInsuranceCommand(ctx: Scenes.WizardContext){
         let result =await createService(ctx, this.serviceName, 3600*24*1000, true, checkInsurance);
         if (result == true)
-            await ctx.reply("Servizio Assicurazione attivato")
+            await ctx.reply("Insurance service activated successfully");
         else
-            await ctx.reply("Il servizio Assicurazione è già attivo oppure non è stato possibile attivarlo");
-
+            await ctx.reply("The insurance service is already active or could not be activated");
     }
 }
