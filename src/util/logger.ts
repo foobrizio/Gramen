@@ -8,7 +8,9 @@ const logger = createLogger({
         }),
         format.errors({ stack: true }),
         format.splat(),
-        format.json()
+        format.printf(({ timestamp, level, message, service }) => {
+            return `${timestamp} | ${level} | ${service} | ${message}`; 
+        })
     ),
     defaultMeta: { service: 'telegram-bot' },
     transports: [

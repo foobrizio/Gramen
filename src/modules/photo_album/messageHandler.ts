@@ -7,6 +7,7 @@ import * as fs from "fs";
 import * as https from "https"
 import {ActiveBotCommand} from "../../bot/model/ActiveBotCommand";
 import logger from "../../util/logger";
+import { stringify } from "../../util/stringify";
 
 
 export class MessageHandler implements IMessageHandler{
@@ -23,7 +24,7 @@ export class MessageHandler implements IMessageHandler{
                 description: "Creates a new collection of photos",
                 permission: 'all',
                 executedFunction: async (ctx) => {
-                    logger.info(`COMMAND: create_album -> ${ctx}`)
+                    logger.info(`COMMAND: create_album -> ${stringify(ctx)}`)
                     await ctx.scene.enter(this.createAlbumSceneName)
                 }
             },
@@ -32,7 +33,7 @@ export class MessageHandler implements IMessageHandler{
                 description: "Adds new photos to an album",
                 permission: 'all',
                 executedFunction: async (ctx) => {
-                    logger.info(`COMMAND: add_photos_to_album -> ${ctx}`)
+                    logger.info(`COMMAND: add_photos_to_album -> ${stringify(ctx)}`)
                     await ctx.scene.enter(this.addPhotosSceneName)
                 }
             },
@@ -49,7 +50,7 @@ export class MessageHandler implements IMessageHandler{
                 description: "Returns all the photos of a specific album",
                 permission: 'all',
                 executedFunction: async (ctx) => {
-                    logger.info(`COMMAND: get_album -> ${ctx}`)
+                    logger.info(`COMMAND: get_album -> ${stringify(ctx)}`)
                     await ctx.scene.enter(this.getAlbumSceneName)
                 }
             }
@@ -67,7 +68,7 @@ export class MessageHandler implements IMessageHandler{
     }
 
     async listAlbumCommand(ctx: Scenes.WizardContext){
-        logger.info(`COMMAND: list_album -> ${ctx}`)
+        logger.info(`COMMAND: list_album -> ${stringify(ctx)}`)
         const id = (ctx.chat as any).id;
         const albumListToString = listOfAlbumsAsString(id)
         if(albumListToString.length == 0){
