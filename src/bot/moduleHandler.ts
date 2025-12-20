@@ -10,12 +10,10 @@ import {ActiveBotCommandDictionary} from "./model/ActiveBotCommandDictionary";
 export class ModuleHandler{
 
     private readonly _modulesDir: string
-    private readonly _root: string
+    private readonly _root: string = './src'
     private readonly _discoveredModules: string[]
 
     constructor() {
-        const config = require("../../config.json")
-        this._root = config.root
         this._modulesDir = "modules"
         this._discoveredModules = this.discoverModules()
     }

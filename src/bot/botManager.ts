@@ -1,17 +1,18 @@
 import { InlineKeyboardMarkup } from "@telegraf/types";
 import { Context, Scenes, session, Telegraf } from "telegraf";
 import { WizardContext } from "telegraf/typings/scenes";
-import config from "../util/config";
 import logger from "../util/logger";
 import { stringify } from "../util/stringify";
 import { ActiveBotCommand } from "./model/ActiveBotCommand";
 import { ActiveBotCommandDictionary } from "./model/ActiveBotCommandDictionary";
 import { ModuleHandler } from "./moduleHandler";
 import { ServiceManager } from "./serviceManager";
+import configLoader from "../util/config_loader";
 
 class BotManager{
 
     private readonly _subMgr: ServiceManager;
+    private readonly mh: ModuleHandler;
     private readonly _bot: Telegraf<Scenes.WizardContext>;
     private readonly listCommandsSceneName = "bot.list_commands_scene";
     private readonly stopServiceSceneName = "bot.stop_service_scene";
@@ -20,8 +21,9 @@ class BotManager{
 
 
     constructor() {
-        this._bot = new Telegraf<Scenes.WizardContext>(config.bot_token);
+        this._bot = new Telegraf<Scenes.WizardContext>(configLoader.bot_token);
         this._subMgr = new ServiceManager();
+        this.mh = new ModuleHandler();
         this._initializeManager()
     }
 
@@ -87,9 +89,8 @@ class BotManager{
     }
 
     async getCommandList(){
-        const mh = new ModuleHandler()
         const commandList = this.getDefaultCommands()
-        let externalModulesDictionary = await mh.activateCommands()
+        let externalModulesDictionary = await this.mh.activateCommands()
         this.botCommandDictionary['core'] = commandList;
         let totalList: ActiveBotCommand[] = commandList
         for(let key in externalModulesDictionary){
@@ -107,6 +108,7 @@ class BotManager{
         this._prepareDefaultCommandScenes()
         this.bot.use(session())
         this._prepareInterceptor()
+        logger.info("Bot manager initialized");
     }
 
     // region INTERCEPTOR
@@ -161,8 +163,7 @@ class BotManager{
             // I permessi non sono dichiarati oppure il comando è pubblico
             return true;
         }
-        const mh = new ModuleHandler();
-        return mh.checkPermissionForModule(moduleName, commandData.permission, userId);
+        return this.mh.checkPermissionForModule(moduleName, commandData.permission, userId);
     }
 
     // endregion
@@ -262,8 +263,7 @@ class BotManager{
     // region SCENES
 
     private async _activateScenes(){
-        let mh = new ModuleHandler()
-        let moduleScenes = await mh.prepareCommandScenes()
+        let moduleScenes = await this.mh.prepareCommandScenes()
         let allScenes = this.sceneList.concat(moduleScenes)
         const stage = new Scenes.Stage<Scenes.WizardContext>(allScenes)
         this.bot.use(stage.middleware())
@@ -283,8 +283,7 @@ class BotManager{
             async (ctx) => {
                 await setUndoCommand(ctx)
                 //STEP 1: Recuperiamo i nomi dei moduli e prepariamo i bottoni
-                let mh = new ModuleHandler()
-                let modules = mh.discoveredModules
+                let modules = this.mh.discoveredModules
                 let moduleKeyboard: InlineKeyboardMarkup = {
                     inline_keyboard: [[]]
                 }
@@ -310,8 +309,7 @@ class BotManager{
                 await ctx.editMessageReplyMarkup(undefined);
                 let chosenModule = (ctx.update as any).callback_query?.data;
                 await ctx.reply("The available commands for the module "+chosenModule+" are the following ones")
-                let mh = new ModuleHandler()
-                let moduleCommands = await mh.getCommandsOfModule(chosenModule)
+                let moduleCommands = await this.mh.getCommandsOfModule(chosenModule)
                 let commandsDescription = "";
                 moduleCommands.forEach(botCommand => {
                     //commandsDescription += "/"+botCommand.command+": "+botCommand.description+"\n"
@@ -369,6 +367,7 @@ class BotManager{
 let botManager: BotManager;
 
 export function startBot() {
+    
     botManager = new BotManager()
     botManager.loadFunctions().then(async () => {
         await botManager.bot.launch()
