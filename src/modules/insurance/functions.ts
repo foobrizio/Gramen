@@ -1,15 +1,16 @@
-import {PdfChecker} from "./util/pdfChecker";
-import {DriverStrategy} from "./strategy/driverStrategy";
-import * as path from 'path';
 import * as fs from "fs";
-import {Context} from "telegraf";
-import {UnipolApiStrategy} from "./strategy/unipolApiStrategy";
+import * as path from 'path';
+import { Context } from "telegraf";
+import { UnipolApiStrategy } from "./strategy/unipolApiStrategy";
+import { PdfChecker } from "./util/pdfChecker";
 
-export async function checkInsurance(ctx: Context){
+export async function checkInsurance(ctx: Context): Promise<boolean>{
     if(await _checkDaScaricare()){
         await _download()
         await sendInsurance(ctx)
+        return true;
     }
+    return false;
 }
 
 async function _checkDaScaricare(){

@@ -169,8 +169,9 @@ class BotManager{
 
 
 
-    async _sendMessage(ctx: Context) {
+    async _sendMessage(ctx: Context): Promise<boolean> {
         await ctx.reply('Messaggio periodico ogni 4 secondi.');
+        return true;
     }
 
     //endregion
@@ -295,8 +296,10 @@ class BotManager{
                         callback_data: elem,
                     })
                     // Cambiamo riga
-                    if(index % 2 != 0)
+                    if(index % 2 != 0){
                         row++;
+                        moduleKeyboard.inline_keyboard.push([]);
+                    }
                 })
                 await ctx.sendMessage("Seleziona il modulo di cui vuoi visualizzare i comandi", {reply_markup: moduleKeyboard})
                 return ctx.wizard.next()
@@ -427,7 +430,7 @@ export async function setUndoCommand(ctx: Context){
  * @param runAtStart if true, the first execution is performed immediately
  * @param executedFunction the function to be executed periodically
  */
-export async function createService(ctx: Scenes.WizardContext, serviceName: string, interval: number, runAtStart: boolean, executedFunction: (ctx: Scenes.WizardContext) => Promise<void>){
+export async function createService(ctx: Scenes.WizardContext, serviceName: string, interval: number, runAtStart: boolean, executedFunction: (ctx: Scenes.WizardContext) => Promise<boolean>){
     let servMgr = getServiceManager();
     let chatId = ctx.chat?.id as number;
     if(!servMgr.isSubscribed(chatId, serviceName)){
@@ -442,8 +445,10 @@ export async function createService(ctx: Scenes.WizardContext, serviceName: stri
             serviceName: serviceName,
             intervalId: intervalId
         });
+        return true;
     } else{
         await ctx.reply(`Hai già attivato il servizio ${serviceName}`)
+        return false;
     }
 }
 
