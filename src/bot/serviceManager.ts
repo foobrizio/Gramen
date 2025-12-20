@@ -38,15 +38,15 @@ export class ServiceManager {
     getServicePair(chatId: number, serviceName: string){
         let array: ServicePair[] = this.threadMap.get(chatId)? this.threadMap.get(chatId) as ServicePair[] : [];
         if(array.length === 0)
-            throw new Error("Il servizio non è stato trovato");
+            throw new Error("The service has not been found");
         let elem= array.find( service => service.serviceName === serviceName)
         if (elem === undefined)
-            throw new Error("Il servizio non è stato trovato");
+            throw new Error("The service has not been found");
         return elem;
     }
 
     async unsubscribe(ctx: Context, servicePair: ServicePair){
-        await ctx.reply("Annullamento della sottoscrizione "+servicePair.serviceName+" in corso...")
+        await ctx.reply("Unsubscribing from "+servicePair.serviceName+" in progress...")
         let intervalId = servicePair.intervalId;
         clearInterval(intervalId);
         let chatId = ctx.chat? ctx.chat.id as number : 0;
@@ -54,6 +54,6 @@ export class ServiceManager {
             return;
         // Qui eliminiamo il thread dalla mappa
         this._forgetSubscription(chatId, servicePair)
-        await ctx.reply("Operazione completata. Da ora non riceverai più aggiornamenti su "+servicePair.serviceName);
+        await ctx.reply("Operation completed. From now on you will no longer receive updates on "+servicePair.serviceName);
     }
 }

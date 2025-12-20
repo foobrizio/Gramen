@@ -1,14 +1,13 @@
-import {ServiceManager} from "./serviceManager";
-import {Context, Scenes, session, Telegraf} from "telegraf";
-import {WizardContext} from "telegraf/typings/scenes";
-import {InlineKeyboardMarkup} from "@telegraf/types";
-import {ModuleHandler} from "./moduleHandler";
+import { InlineKeyboardMarkup } from "@telegraf/types";
+import { Context, Scenes, session, Telegraf } from "telegraf";
+import { WizardContext } from "telegraf/typings/scenes";
 import config from "../util/config";
-import {ActiveBotCommand} from "./model/ActiveBotCommand";
 import logger from "../util/logger";
-import {ActiveBotCommandDictionary} from "./model/ActiveBotCommandDictionary";
-import {checkInsurance} from "../modules/insurance/functions";
 import { stringify } from "../util/stringify";
+import { ActiveBotCommand } from "./model/ActiveBotCommand";
+import { ActiveBotCommandDictionary } from "./model/ActiveBotCommandDictionary";
+import { ModuleHandler } from "./moduleHandler";
+import { ServiceManager } from "./serviceManager";
 
 class BotManager{
 
@@ -123,7 +122,7 @@ class BotManager{
                 let command = (ctx.update as any).message.text;
                 if(!userId){
                     logger.warn(`Message received by a user without id. Command: ${command}, from: ${ctx.from}`)
-                    await ctx.reply('Questo comando è stato bloccato dall\'interceptor.');
+                    await ctx.reply('This command was blocked by the interceptor.');
                     return;
                 }
                 // Verifica se il messaggio è un comando
@@ -134,7 +133,7 @@ class BotManager{
                         const shouldProceed = this._checkUserPermissions(userId, command);
                         if (!shouldProceed) {
                             // Non chiamare next() per interrompere l'esecuzione del comando
-                            await ctx.reply('Non hai i permessi per usare questo comando.');
+                            await ctx.reply('You do not have permission to use this command.');
                             return;
                         }
                     }
@@ -171,7 +170,7 @@ class BotManager{
 
 
     async _sendMessage(ctx: Context): Promise<boolean> {
-        await ctx.reply('Messaggio periodico ogni 4 secondi.');
+        await ctx.reply('Periodic message every 4 seconds.');
         return true;
     }
 
@@ -236,7 +235,7 @@ class BotManager{
             }
         }
         else{
-            await ctx.reply("Non c'è nessun servizio attivo")
+            await ctx.reply("No active services detected")
         }
     }
 
@@ -249,7 +248,7 @@ class BotManager{
         const userId = ctx.from?.id as number;
         const runningElements = this.subMgr.getRunningElements(userId);
         if(runningElements.length == 0){
-            await ctx.reply("Non hai servizi attivi");
+            await ctx.reply("You have no active services");
             return;
         }
         let serviceAnswer = "";
@@ -302,7 +301,7 @@ class BotManager{
                         moduleKeyboard.inline_keyboard.push([]);
                     }
                 })
-                await ctx.sendMessage("Seleziona il modulo di cui vuoi visualizzare i comandi", {reply_markup: moduleKeyboard})
+                await ctx.sendMessage("Select the module for which you want to view the commands", {reply_markup: moduleKeyboard})
                 return ctx.wizard.next()
             },
             async(ctx) => {
@@ -310,7 +309,7 @@ class BotManager{
 
                 await ctx.editMessageReplyMarkup(undefined);
                 let chosenModule = (ctx.update as any).callback_query?.data;
-                await ctx.reply("I comandi disponibili per il modulo "+chosenModule+" sono i seguenti")
+                await ctx.reply("The available commands for the module "+chosenModule+" are the following ones")
                 let mh = new ModuleHandler()
                 let moduleCommands = await mh.getCommandsOfModule(chosenModule)
                 let commandsDescription = "";
@@ -347,7 +346,7 @@ class BotManager{
                     if(index % 2 != 0)
                         row++;
                 })
-                await ctx.sendMessage("Quale servizio vuoi disattivare?", {reply_markup: services})
+                await ctx.sendMessage("Which service do you want to deactivate?", {reply_markup: services})
                 return ctx.wizard.next()
             },
             async(ctx) => {
@@ -404,7 +403,7 @@ export function enableUndoForScenes(scenes: Array<Scenes.WizardScene<Scenes.Wiza
 }
 
 export async function undo(ctx: Scenes.WizardContext<Scenes.WizardSessionData>){
-    await ctx.reply("Comando annullato")
+    await ctx.reply("Command cancelled")
     await ctx.scene.leave()
     await botManager.reloadCommands(ctx)
 }
@@ -435,8 +434,8 @@ export async function createService(ctx: Scenes.WizardContext, serviceName: stri
     let servMgr = getServiceManager();
     let chatId = ctx.chat?.id as number;
     if(!servMgr.isSubscribed(chatId, serviceName)){
-        // Possiamo far partire la nuova sottoscrizione
-        await ctx.reply(`Servizio ${serviceName} attivato`)
+        // We can start the new subscription
+        await ctx.reply(`Service ${serviceName} activated`)
         if(runAtStart)
             await executedFunction(ctx);
         let intervalId = setInterval( () => {
@@ -448,7 +447,7 @@ export async function createService(ctx: Scenes.WizardContext, serviceName: stri
         });
         return true;
     } else{
-        await ctx.reply(`Hai già attivato il servizio ${serviceName}`)
+        await ctx.reply(`You have already activated the service ${serviceName}`)
         return false;
     }
 }
