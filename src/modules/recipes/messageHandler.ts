@@ -2,6 +2,7 @@ import { Scenes, Context } from "telegraf";
 import { WizardContext, WizardSessionData } from "telegraf/typings/scenes";
 import { ActiveBotCommand } from "../../bot/model/ActiveBotCommand";
 import { IMessageHandler } from "../../bot/model/IMessageHandler";
+import { LogCommand } from "../../util/logger";
 
 export class MessageHandler implements IMessageHandler{
 
@@ -14,33 +15,25 @@ export class MessageHandler implements IMessageHandler{
                 command:'create_recipe',
                 description:'Creates a new recipe',
                 permission: 'private',
-                executedFunction: async (ctx) => {
-                    await this.createRecipe(ctx)
-                }
+                executedFunction: async (ctx) => await this.createRecipeCommand(ctx)
             },
             {
                 command:'get_recipe',
                 description:'Retrieves an existing recipe',
                 permission: 'private',
-                executedFunction: async (ctx) => {
-                    await this.getRecipe(ctx)
-                }
+                executedFunction: async (ctx) => await this.getRecipeCommand(ctx)
             },
             {
                 command:'edit_recipe',
                 description:'Updates an existing recipe',
                 permission: 'private',
-                executedFunction: async (ctx) => {
-                    await this.updateRecipe(ctx)
-                }
+                executedFunction: async (ctx) => await this.updateRecipeCommand(ctx)
             },
             {
                 command:'delete_recipe',
                 description:'Updates an existing recipe',
                 permission: 'private',
-                executedFunction: async (ctx) => {
-                    await this.deleteRecipe(ctx)
-                }
+                executedFunction: async (ctx) => await this.deleteRecipeCommand(ctx)
             },
         ]
     }
@@ -54,16 +47,23 @@ export class MessageHandler implements IMessageHandler{
 
     //#region  CRUD Operations
 
-    createRecipe(ctx: Context) {
+    @LogCommand()
+    createRecipeCommand(ctx: Context) {
         throw new Error("Method not implemented.");
     }
-    getRecipe(ctx: Context) {
+    
+    @LogCommand()
+    getRecipeCommand(ctx: Context) {
         throw new Error("Method not implemented.");
     }
-    updateRecipe(ctx: Context) {
+
+    @LogCommand()
+    updateRecipeCommand(ctx: Context) {
         throw new Error("Method not implemented.");
     }
-    deleteRecipe(ctx: Context) {
+    
+    @LogCommand()
+    deleteRecipeCommand(ctx: Context) {
         throw new Error("Method not implemented.");
     }
 
