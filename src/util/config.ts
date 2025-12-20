@@ -8,6 +8,7 @@ const configPath = path.resolve(__dirname, '../../config.json');
 
 interface BotConfig {
     bot_token: string;
+    logs_path?: string;
 }
 
 function readConfig(): BotConfig {

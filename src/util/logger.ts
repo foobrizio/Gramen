@@ -1,4 +1,13 @@
 import { createLogger, format, transports } from 'winston';
+import fs from 'fs';
+import path from 'path';
+const config = require("../../config.json")
+
+const logsDir = config?.logs_path || './logs/';
+
+if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+}
 
 const logger = createLogger({
     level: 'info',
@@ -14,8 +23,8 @@ const logger = createLogger({
     ),
     defaultMeta: { service: 'telegram-bot' },
     transports: [
-        new transports.File({ filename: 'error.log', level: 'error' }),
-        new transports.File({ filename: 'combined.log' })
+        new transports.File({ filename: path.join(logsDir, 'error.log'), level: 'error' }),
+        new transports.File({ filename: path.join(logsDir, 'bot.log') })
     ]
 });
 
