@@ -16,7 +16,7 @@ class BotManager{
     private readonly _bot: Telegraf<Scenes.WizardContext>;
     private readonly listCommandsSceneName = "bot.list_commands_scene";
     private readonly stopServiceSceneName = "bot.stop_service_scene";
-    private sceneList: Scenes.WizardScene<Scenes.WizardContext>[] = [];
+    private sceneList: Scenes.BaseScene<Scenes.WizardContext>[] = [];
     private botCommandDictionary: ActiveBotCommandDictionary = {}
 
 
@@ -278,13 +278,13 @@ class BotManager{
 
 
     private _prepareDefaultCommandScenes(){
-        let listAlbumScene: Scenes.WizardScene<Scenes.WizardContext> = this._prepareListCommandsScene()
-        let stopServiceScene: Scenes.WizardScene<Scenes.WizardContext> = this._prepareStopServiceScene()
+        let listAlbumScene: Scenes.BaseScene<Scenes.WizardContext> = this._prepareListCommandsScene()
+        let stopServiceScene: Scenes.BaseScene<Scenes.WizardContext> = this._prepareStopServiceScene()
         this.sceneList = [listAlbumScene, stopServiceScene];
         enableUndoForScenes(this.sceneList)
     }
 
-    private _prepareListCommandsScene(): Scenes.WizardScene<Scenes.WizardContext>{
+    private _prepareListCommandsScene(): Scenes.BaseScene<Scenes.WizardContext>{
         return new Scenes.WizardScene<Scenes.WizardContext>(
             this.listCommandsSceneName,
             async (ctx) => {
@@ -329,7 +329,7 @@ class BotManager{
         );
     }
 
-    private _prepareStopServiceScene(): Scenes.WizardScene<Scenes.WizardContext>{
+    private _prepareStopServiceScene(): Scenes.BaseScene<Scenes.WizardContext>{
         return new Scenes.WizardScene<Scenes.WizardContext>(
             this.stopServiceSceneName,
             async (ctx) => {
@@ -400,7 +400,7 @@ export function getBot(): Telegraf<Scenes.WizardContext>{
  * the end of the scene.
  * @param scenes the array containing the scenes you want to enhance with 'undo' command.
  */
-export function enableUndoForScenes(scenes: Array<Scenes.WizardScene<Scenes.WizardContext>>){
+export function enableUndoForScenes(scenes: Array<Scenes.BaseScene<Scenes.WizardContext>>){
     scenes.forEach(scene => {
         scene.command("undo", async(ctx) => {
             await undo(ctx);

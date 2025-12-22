@@ -22,5 +22,5 @@ export interface IMessageHandler{
     /**
      * This method must return the list of scenes, if any, that have to be used by your commands
      */
-    prepareScenes(): Scenes.WizardScene<Scenes.WizardContext>[]
+    prepareScenes(): Scenes.BaseScene<Scenes.WizardContext>[]
 }

@@ -17,6 +17,8 @@ export class MessageHandler implements IMessageHandler{
     private readonly getAlbumSceneName:string = "photo_album.get_album"
 
 
+
+    //#region IMessageHandler Implementation
     descriptionMapping(): ActiveBotCommand[] {
         return [
             {
@@ -46,8 +48,7 @@ export class MessageHandler implements IMessageHandler{
         ];
     }
 
-    //region SCENES
-    prepareScenes(): Scenes.WizardScene<Scenes.WizardContext>[] {
+    prepareScenes(): Scenes.BaseScene<Scenes.WizardContext>[] {
         const createAlbumScene = this._prepareCreateAlbumScene()
         const addPhotosScene = this._prepareAddPhotosScene()
         const getAlbumScene = this._prepareGetAlbumScene()
@@ -55,7 +56,9 @@ export class MessageHandler implements IMessageHandler{
         enableUndoForScenes(result)
         return result
     }
+    //#endregion
 
+    //#region COMMAND Operations
     @LogCommand()
     async createAlbumCommand(ctx: Scenes.WizardContext){
         await ctx.scene.enter(this.createAlbumSceneName)
@@ -84,8 +87,11 @@ export class MessageHandler implements IMessageHandler{
             await ctx.reply(albumListToString)
         }
     }
+    //#endregion
 
-    private _prepareCreateAlbumScene(): Scenes.WizardScene<Scenes.WizardContext> {
+
+    //#region SCENES
+    private _prepareCreateAlbumScene(): Scenes.BaseScene<Scenes.WizardContext> {
         let album_name = "";
         let path = "";
         let completePath = "";
@@ -95,8 +101,8 @@ export class MessageHandler implements IMessageHandler{
         const constants = require('./constants.json')
         return new Scenes.WizardScene<Scenes.WizardContext>(
             this.createAlbumSceneName,
+            // STEP 1
             async (ctx) => {
-                // STEP 1
                 await setUndoCommand(ctx)
                 try{
                     await ctx.reply("Insert the name of the new album")
@@ -107,8 +113,8 @@ export class MessageHandler implements IMessageHandler{
                     return ctx.scene.leave()
                 }
             },
+            // STEP 2
             async(ctx) => {
-                // STEP 2
                 try{
                     album_name = (ctx.message as any).text
                     await ctx.reply("- Insert the folder path for the new album")
@@ -119,8 +125,8 @@ export class MessageHandler implements IMessageHandler{
                     return ctx.scene.leave()
                 }
             },
+            // STEP 3
             async(ctx) => {
-                // STEP 3
                 try{
                     path = (ctx.message as any).text
                     const id = (ctx.chat as any).id
@@ -149,8 +155,8 @@ export class MessageHandler implements IMessageHandler{
                     return ctx.scene.leave()
                 }
             },
+            //STEP 4
             async(ctx) => {
-                //STEP 4
                 try {
                     this._savePhoto(completePath, ctx);
                     //TODO: Non siamo attualmente in grado di inviare un unico messaggio per l'intero mediaGroup
@@ -168,7 +174,7 @@ export class MessageHandler implements IMessageHandler{
         )
     }
 
-    private _prepareAddPhotosScene(): Scenes.WizardScene<Scenes.WizardContext> {
+    private _prepareAddPhotosScene(): Scenes.BaseScene<Scenes.WizardContext> {
 
         let album_name = "";
         let complete_path = "";
@@ -223,7 +229,7 @@ export class MessageHandler implements IMessageHandler{
         )
     }
 
-    private _prepareGetAlbumScene(): Scenes.WizardScene<Scenes.WizardContext>{
+    private _prepareGetAlbumScene(): Scenes.BaseScene<Scenes.WizardContext>{
         return new Scenes.WizardScene<Scenes.WizardContext>(
             this.getAlbumSceneName,
             async (ctx) => {

@@ -65,8 +65,8 @@ export class ModuleHandler{
         return dirs;
     }
 
-    async prepareCommandScenes(): Promise<Scenes.WizardScene<Scenes.WizardContext>[]> {
-        let sceneList: Scenes.WizardScene<Scenes.WizardContext>[] = []
+    async prepareCommandScenes(): Promise<Scenes.BaseScene<Scenes.WizardContext>[]> {
+        let sceneList: Scenes.BaseScene<Scenes.WizardContext>[] = []
         for (const module of this._discoveredModules){
             let mh = await this.getMessageHandler(module)
             sceneList = sceneList.concat(mh.prepareScenes())
@@ -85,6 +85,9 @@ export class ModuleHandler{
         let modulePath = `../${this._modulesDir}/${module}/constants.json`;
         const moduleConstants = require(modulePath);
         const permissionDictionary = moduleConstants.permissions;
+        if(!permissionDictionary){
+            return true; //If no permissions are defined, everyone can access
+        }
         const groupList: number[] = permissionDictionary[group]
         return groupList? groupList.includes(userId) : false;
     }

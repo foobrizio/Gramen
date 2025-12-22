@@ -36,7 +36,7 @@ The developer can develop its own modules and increase the number of commands th
     /**
      * This method must return the list of scenes, if any, that have to be used by your commands
      */
-    prepareScenes(): Scenes.WizardScene<Scenes.WizardContext>[]
+    prepareScenes(): Scenes.BaseScene<Scenes.WizardContext>[]
     }
   ```
 ## Components

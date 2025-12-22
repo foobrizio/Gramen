@@ -26,7 +26,7 @@ export class MessageHandler implements IMessageHandler{
         ]
     }
 
-    prepareScenes(): Scenes.WizardScene<Scenes.WizardContext>[] {
+    prepareScenes(): Scenes.BaseScene<Scenes.WizardContext>[] {
         // INFO: There are no scenes in this module
         return []
     }
