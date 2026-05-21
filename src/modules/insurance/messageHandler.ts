@@ -4,6 +4,7 @@ import { ActiveBotCommand } from "../../bot/model/ActiveBotCommand";
 import { IMessageHandler } from "../../bot/model/IMessageHandler";
 import logger, { LogCommand } from "../../util/logger";
 import { checkInsurance, sendInsurance } from "./functions";
+import { hoursToMillis } from "../../util/time_utils";
 
 export class MessageHandler implements IMessageHandler{
 
@@ -39,7 +40,8 @@ export class MessageHandler implements IMessageHandler{
 
     @LogCommand()
     async startInsuranceCommand(ctx: Scenes.WizardContext){
-        let result =await createService(ctx, this.serviceName, 3600*24*1000, true, checkInsurance);
+        const interval = hoursToMillis(24);
+        let result =await createService(ctx, this.serviceName, interval, true, checkInsurance);
         if (result == true)
             await ctx.reply("Insurance service activated successfully");
         else
