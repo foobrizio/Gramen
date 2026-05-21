@@ -39,6 +39,13 @@ The developer can develop its own modules and increase the number of commands th
     prepareScenes(): Scenes.BaseScene<Scenes.WizardContext>[]
     }
   ```
+
+Alternatively, all of the above can be scaffolded automatically by running the following command from the project root:
+  ```bash
+  npm run generate:module -- 
+  ```
+This will create the module subfolder inside `src/modules` along with a pre-configured `messageHandler.ts`, an empty `functions.ts`, the `constants.json` configuration file and a `.gitignore` that excludes `constants.json` from version control.
+
 ## Components
 ### BotManager
 TODO

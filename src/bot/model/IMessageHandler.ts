@@ -1,5 +1,4 @@
-import {BotCommand} from "telegraf/types";
-import {Scenes, Telegraf} from "telegraf";
+import {Scenes} from "telegraf";
 import {ActiveBotCommand} from "./ActiveBotCommand";
 
 export interface IMessageHandler{
