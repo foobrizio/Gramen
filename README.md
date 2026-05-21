@@ -48,6 +48,7 @@ TODO
 TODO
 ### Logger
 TODO
+
 ## Services
 **Services** are special operations provided by the bot that can be executed periodically. They can be started and stopped manually by the user and, after started, they perform a specific operation on a periodic cadence. 
 In order to create a new service, the developer can use the built-in function *createService* inside *botManager.ts*:
@@ -82,7 +83,11 @@ export async function createService(ctx: Scenes.WizardContext, serviceName: stri
 ```
 Services can be stopped by the user by invoking the command '*/stop*'.
 ## Implemented functionalities:
-### v1
+### v0.2
+1. debug_mode introduction. Modules now can define commands that can be executed only in debug_mode
+2. log functionality improved
+3. modules can be enabled or disabled 
+### v0.1
 1. Possibility to activate/ stop threads that execute commands at specific intervals;
 2. Possibility to add custom modules;
 3. Built-in tools to create and handle services; 
