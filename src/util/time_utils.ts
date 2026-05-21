@@ -12,4 +12,4 @@ export function minutesToMillis(minutes: number): number {
 
 export function secondsToMillis(seconds: number): number {
     return seconds * 1000;
-}s
+}
