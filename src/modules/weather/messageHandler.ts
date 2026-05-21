@@ -41,8 +41,8 @@ export class MessageHandler implements IMessageHandler {
         let interval = hoursToMillis(3);
         let result = await createService(ctx, this.serviceName, interval, true, checkWeatherAlerts);
         if (result == true)
-            await ctx.reply("Weather alerts service activated successfully");
+            await ctx.reply("Servizio allarme meteo attivato con successo! Riceverai notifiche ogni 3 ore se ci sono allerte meteo.");
         else
-            await ctx.reply("The weather alerts service is already active or could not be activated");
+            await ctx.reply("Il servizio allarme meteo è già attivo o non può essere attivato");
     }
 }
