@@ -13,3 +13,13 @@ export function minutesToMillis(minutes: number): number {
 export function secondsToMillis(seconds: number): number {
     return seconds * 1000;
 }
+
+export function dayOfWeek(date: string): string {
+  const days = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
+  return days[new Date(date).getDay()];
+}
+
+export function monthToString(month: string): string {
+    const months = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+    return months[parseInt(month) - 1];
+}
