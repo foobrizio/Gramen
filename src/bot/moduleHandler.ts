@@ -60,8 +60,21 @@ export class ModuleHandler{
                 //Vogliamo soltanto le directories che sono effettivamente moduli
                 let dirPath = moduleDirsPath+"/"+dir+"/"
                 return fs.existsSync(dirPath+"messageHandler.ts")
+            }).filter(module => {
+                //Vogliamo soltanto i moduli che sono attivi
+                let moduleConstants = moduleDirsPath+"/"+module+"/constants.json";
+                if(fs.existsSync(moduleConstants)){
+                    const raw = fs.readFileSync(moduleConstants, 'utf-8');
+                    const data = JSON.parse(raw);
+                    return data.enabled;
+                }
+                return false;
             });
-        logger.info(`Modules found : ${dirs}`)
+        if(dirs.length > 0){
+            logger.info(`Modules found : ${dirs}`)
+        } else {
+            logger.info('No modules found. Ensure that the modules are located in the correct directory and that they are enabled.');
+        }
         return dirs;
     }
 
