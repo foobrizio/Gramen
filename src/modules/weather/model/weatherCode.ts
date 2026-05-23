@@ -28,3 +28,70 @@ export enum WeatherCode {
   THUNDERSTORM_SLIGHT_HAIL = 96,
   THUNDERSTORM_HEAVY_HAIL = 99,
 }
+
+
+
+export function enumToString(code: WeatherCode): string {
+  const name: string = WeatherCode[code];
+  if (!name) 
+    throw new Error(`Unknown WeatherCode: ${code}`);
+  return name
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+export function weatherCodeToIcon(code: WeatherCode): string {
+  switch (code) {
+    case WeatherCode.CLEAR_SKY:
+      return "☀️";
+    case WeatherCode.MAINLY_CLEAR:
+      return "🌤️";
+    case WeatherCode.PARTLY_CLOUDY:
+      return "⛅";
+    case WeatherCode.OVERCAST:
+      return "☁️";
+    case WeatherCode.FOG:
+    case WeatherCode.DEPOSITING_RIME_FOG:
+      return "🌫️";
+    case WeatherCode.DRIZZLE_LIGHT:
+    case WeatherCode.DRIZZLE_MODERATE:
+    case WeatherCode.DRIZZLE_DENSE:
+      return "🌦️";
+    case WeatherCode.FREEZING_DRIZZLE_LIGHT:
+    case WeatherCode.FREEZING_DRIZZLE_DENSE:
+      return "🌧️❄️";
+    case WeatherCode.RAIN_SLIGHT:
+      return "🌦️";
+    case WeatherCode.RAIN_MODERATE:
+      return "🌧️";
+    case WeatherCode.RAIN_HEAVY:
+      return "🌧️💧";
+    case WeatherCode.FREEZING_RAIN_LIGHT:
+    case WeatherCode.FREEZING_RAIN_HEAVY:
+      return "🌨️";
+    case WeatherCode.SNOW_SLIGHT:
+      return "🌨️";
+    case WeatherCode.SNOW_MODERATE:
+      return "❄️";
+    case WeatherCode.SNOW_HEAVY:
+      return "❄️❄️";
+    case WeatherCode.SNOW_GRAINS:
+      return "🌨️";
+    case WeatherCode.RAIN_SHOWERS_SLIGHT:
+      return "🌦️";
+    case WeatherCode.RAIN_SHOWERS_MODERATE:
+      return "🌧️";
+    case WeatherCode.RAIN_SHOWERS_VIOLENT:
+      return "⛈️";
+    case WeatherCode.SNOW_SHOWERS_SLIGHT:
+    case WeatherCode.SNOW_SHOWERS_HEAVY:
+      return "🌨️❄️";
+    case WeatherCode.THUNDERSTORM:
+      return "⛈️";
+    case WeatherCode.THUNDERSTORM_SLIGHT_HAIL:
+      return "⛈️🌨️";
+    case WeatherCode.THUNDERSTORM_HEAVY_HAIL:
+      return "⛈️🌩️";
+  }
+}
