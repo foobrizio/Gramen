@@ -1,10 +1,10 @@
-import {Browser, Builder, By, Capabilities, Key, until, WebDriver} from 'selenium-webdriver';
+import {Browser, Builder, By, Capabilities, until, WebDriver} from 'selenium-webdriver';
 import {Options} from "selenium-webdriver/chrome";
-import {rejects} from "node:assert";
 import logger from "../../../util/logger";
+import { InsuranceStrategy } from './InsuranceStrategy';
 
 
-export class DriverStrategy{
+export class DriverStrategy implements InsuranceStrategy{
 
     driver: WebDriver
     chromeOptions: Options
@@ -28,7 +28,7 @@ export class DriverStrategy{
             .build();
     }
 
-    async getInsurance(){
+    async getInsurance(): Promise<string> {
         return new Promise(async (resolve, reject) => {
             try{
                 logger.info('Get insurance in execution')
@@ -51,7 +51,7 @@ export class DriverStrategy{
                 //await button.click()
                 setTimeout(() => {
                     this.close()
-                    resolve(true)
+                    resolve('success')
                 }, 10000)
             }catch(error) {
                 logger.error(`${error}`)

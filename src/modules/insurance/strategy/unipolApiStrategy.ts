@@ -1,7 +1,8 @@
 import * as fs from "fs";
 import logger from "../../../util/logger";
+import { InsuranceStrategy } from "./InsuranceStrategy";
 
-export class UnipolApiStrategy{
+export class UnipolApiStrategy implements InsuranceStrategy {
 
     constants = require('../constants.json')
 
