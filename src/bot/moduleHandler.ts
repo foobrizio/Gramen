@@ -7,19 +7,32 @@ import {ActiveBotCommand} from "./model/ActiveBotCommand";
 import logger from "../util/logger";
 import {ActiveBotCommandDictionary} from "./model/ActiveBotCommandDictionary";
 
+
 export class ModuleHandler{
 
-    private readonly _modulesDir: string
+    private readonly _modulesDir: string = "modules"
+    private readonly _confDir: string = "conf"
     private readonly _root: string = './src'
     private readonly _discoveredModules: string[]
 
+    private configs = new Map<string, any>();
+
     constructor() {
-        this._modulesDir = "modules"
         this._discoveredModules = this.discoverModules()
     }
 
     get discoveredModules(): string[] {
         return this._discoveredModules;
+    }
+
+    getConfig(moduleName: string){
+        if(this.configs.has(moduleName)){
+            this.configs.set(
+                moduleName,
+                require(`../conf/${moduleName}/constants.json`)
+            );
+        }
+        return this.configs.get(moduleName);
     }
 
     async getCommandsOfModule(module: string): Promise<BotCommand[]>{
@@ -50,19 +63,20 @@ export class ModuleHandler{
     }
 
     discoverModules(): string[]{
-        const moduleDirsPath = this._root+"/"+this._modulesDir
+        const moduleDirsPath = `${this._root}/${this._modulesDir}`
+        const moduleConfPath = `${this._root}/${this._confDir}`
         let dirs = fs.readdirSync(moduleDirsPath)
             .filter(file => {
                 // Vogliamo soltanto le directories
-                let absFile = moduleDirsPath +"/"+file
+                let absFile = `${moduleDirsPath}/${file}`
                 return fs.lstatSync(absFile).isDirectory()
             }).filter(dir => {
                 //Vogliamo soltanto le directories che sono effettivamente moduli
-                let dirPath = moduleDirsPath+"/"+dir+"/"
+                let dirPath = `${moduleDirsPath}/${dir}/`
                 return fs.existsSync(dirPath+"messageHandler.ts")
             }).filter(module => {
                 //Vogliamo soltanto i moduli che sono attivi
-                let moduleConstants = moduleDirsPath+"/"+module+"/constants.json";
+                let moduleConstants = `${moduleConfPath}/${module}/constants.json`;
                 if(fs.existsSync(moduleConstants)){
                     const raw = fs.readFileSync(moduleConstants, 'utf-8');
                     const data = JSON.parse(raw);
@@ -94,9 +108,10 @@ export class ModuleHandler{
         return new mod.MessageHandler() as IMessageHandler
     }
 
-    checkPermissionForModule(module: string, group: string, userId: number): boolean{
-        let modulePath = `../${this._modulesDir}/${module}/constants.json`;
-        const moduleConstants = require(modulePath);
+    async checkPermissionForModule(module: string, group: string, userId: number): Promise<boolean>{
+        //let modulePath = `../${this._modulesDir}/${module}/constants.json`;
+        const mh = await this.getMessageHandler(module);
+        const moduleConstants = mh.getConfig();
         const permissionDictionary = moduleConstants.permissions;
         if(!permissionDictionary){
             return true; //If no permissions are defined, everyone can access

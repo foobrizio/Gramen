@@ -1,20 +1,18 @@
-import { Context } from "telegraf";
 import { OpenMeteoStrategy } from "./strategy/OpenMeteoStrategy";
+import { BotService } from "../../bot/model/BotService";
 
 // Define strategy here
 const strategy = new OpenMeteoStrategy();
 
-export async function checkWeather(ctx: Context): Promise<boolean>{
-
-    let messages: string[] = await strategy.checkWeather();
+export const checkWeather: BotService = async (ctx, config) => {
+    let messages: string[] = await strategy.checkWeather(config);
     for(const message of messages){
         await ctx.reply(message, { parse_mode: 'Markdown'});
     }
     return true;
 }
 
-export async function checkWeatherAlerts(ctx: Context): Promise<boolean>{
-
-    const result= strategy.checkWeatherAlerts();
+export const checkWeatherAlerts: BotService = async (ctx, config) => {
+    const result= strategy.checkWeatherAlerts(config);
     return true;
 }

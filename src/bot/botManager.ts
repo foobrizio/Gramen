@@ -2,12 +2,18 @@ import { InlineKeyboardMarkup } from "@telegraf/types";
 import { Context, Scenes, session, Telegraf } from "telegraf";
 import { WizardContext } from "telegraf/typings/scenes";
 import logger, { LogCommand } from "../util/logger";
-import { stringify } from "../util/stringify";
 import { ActiveBotCommand } from "./model/ActiveBotCommand";
 import { ActiveBotCommandDictionary } from "./model/ActiveBotCommandDictionary";
 import { ModuleHandler } from "./moduleHandler";
 import { ServiceManager } from "./serviceManager";
 import configLoader from "../util/config_loader";
+import { BotService } from "./model/BotService";
+
+const _sendMessage: BotService = async(ctx) => {
+    await ctx.reply('Periodic message every 4 seconds.');
+    return true;
+}
+
 
 class BotManager{
 
@@ -92,11 +98,14 @@ class BotManager{
         let externalModulesDictionary = await this.mh.activateCommands()
         this.botCommandDictionary['core'] = commandList;
         let totalList: ActiveBotCommand[] = commandList
+        logger.debug(`External modules dictionary: ${JSON.stringify(externalModulesDictionary)}`)
         for(let key in externalModulesDictionary){
             let moduleCommands = externalModulesDictionary[key]
+            logger.debug(`Commands for module ${key}: ${JSON.stringify(moduleCommands)}`)
             this.botCommandDictionary[key] = moduleCommands
             totalList = totalList.concat(moduleCommands)
         }
+        logger.debug(`module List: ${JSON.stringify(totalList)}`)
         return totalList;
     }
 
@@ -131,7 +140,7 @@ class BotManager{
                     command = command.substring(1)
                     if(command !== "start" && command !== "undo"){
                         // Esegui le operazioni che desideri qui
-                        const shouldProceed = this._checkUserPermissions(userId, command);
+                        const shouldProceed = await this._checkUserPermissions(userId, command);
                         if (!shouldProceed) {
                             // Non chiamare next() per interrompere l'esecuzione del comando
                             await ctx.reply('You do not have permission to use this command.');
@@ -144,35 +153,32 @@ class BotManager{
         });
     }
 
-    private _checkUserPermissions(userId: number, command: string): boolean {
+    private async _checkUserPermissions(userId: number, command: string): Promise<boolean> {
         // STEP 1: Recuperare le permissions associate al command e il modulo di riferimento
         for(const key in this.botCommandDictionary){
             let commandFound = this.botCommandDictionary[key].filter(x => x.command === command)
             if(commandFound.length == 1){
                 // L'abbiamo trovato
-                return this._checkPermissionForCommand(key, commandFound[0], userId)
+                return await this._checkPermissionForCommand(key, commandFound[0], userId)
             }
         }
         logger.warn(`Command ${command} was not found during check of permissions for user ${userId}`)
         return false;
     }
 
-    private _checkPermissionForCommand(moduleName: string, commandData: ActiveBotCommand, userId: number): boolean{
+    private async _checkPermissionForCommand(moduleName: string, commandData: ActiveBotCommand, userId: number): Promise<boolean>{
         if(!commandData.permission || commandData.permission === 'all'){
             // I permessi non sono dichiarati oppure il comando è pubblico
             return true;
         }
-        return this.mh.checkPermissionForModule(moduleName, commandData.permission, userId);
+        return await this.mh.checkPermissionForModule(moduleName, commandData.permission, userId);
     }
 
     // endregion
 
-
-
-    async _sendMessage(ctx: Context): Promise<boolean> {
-        await ctx.reply('Periodic message every 4 seconds.');
-        return true;
-    }
+    // async _sendMessage(ctx: Context, config: any): Promise<boolean> {
+        
+    // }
 
     //endregion
 
@@ -199,23 +205,7 @@ class BotManager{
         if(chatId === 0)
             return;
 
-        await createService(ctx, servName, 4000, false, this._sendMessage)
-        //let servMgr = getServiceManager()
-        /*if(servMgr.isSubscribed(chatId, servName)) {
-            await ctx.reply('Il servizio è già attivo.');
-            return;
-        }
-        // Imposta l'intervallo di 4 secondi per l'invio periodico
-        await ctx.reply(servName+" attivato!")
-        let intervalId = setInterval(() => {
-            this._sendMessage(ctx)
-        }, 4000);
-        //}
-        //Qui aggiungiamo il thread nella mappa
-        servMgr.subscribe(chatId, {
-            intervalId: intervalId as NodeJS.Timeout,
-            serviceName: servName
-        });*/
+        await createService(ctx, servName, 4000, false, _sendMessage, undefined)
     }
 
     @LogCommand()
@@ -436,16 +426,16 @@ export async function setUndoCommand(ctx: Context){
  * @param runAtStart if true, the first execution is performed immediately
  * @param executedFunction the function to be executed periodically
  */
-export async function createService(ctx: Scenes.WizardContext, serviceName: string, interval: number, runAtStart: boolean, executedFunction: (ctx: Scenes.WizardContext) => Promise<boolean>){
+export async function createService(ctx: Scenes.WizardContext, serviceName: string, interval: number, runAtStart: boolean, executedFunction: BotService, config: any){
     let servMgr = getServiceManager();
     let chatId = ctx.chat?.id as number;
     if(!servMgr.isSubscribed(chatId, serviceName)){
         // We can start the new subscription
         await ctx.reply(`Service ${serviceName} activated`)
         if(runAtStart)
-            await executedFunction(ctx);
+            await executedFunction(ctx, config);
         let intervalId = setInterval( () => {
-            executedFunction(ctx)
+            executedFunction(ctx, config)
         }, interval)   //once a day
         servMgr.subscribe(chatId, {
             serviceName: serviceName,

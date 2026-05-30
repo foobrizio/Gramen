@@ -1,4 +1,6 @@
 {
   "bot_token": "your_bot_token",
-  "root": ""
+  "logs_path": "",
+  "log_level": "", # info, debug
+  "debug_mode": true
 }

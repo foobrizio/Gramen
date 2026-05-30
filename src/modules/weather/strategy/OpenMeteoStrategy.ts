@@ -10,7 +10,6 @@ import { dayOfWeek, monthToString } from "../../../util/time_utils";
 
 export class OpenMeteoStrategy implements WeatherStrategy {
 
-    constants = require('../constants.json')
     baseUrl = "https://api.open-meteo.com/v1/forecast";
 
     fasce = [
@@ -21,8 +20,8 @@ export class OpenMeteoStrategy implements WeatherStrategy {
     ];
 
 
-    async checkWeather(): Promise<string[]> {
-        const weatherResults = (await this.getWeatherResultsFromOpenMeteoApi());
+    async checkWeather(config: any): Promise<string[]> {
+        const weatherResults = (await this.getWeatherResultsFromOpenMeteoApi(config));
         const dailyMap: Map<string, WeatherResult[]> = weatherResultToDailyMap(weatherResults);
         let messages: string[] = [];
         for (const [day, result] of dailyMap.entries()) {
@@ -45,8 +44,8 @@ export class OpenMeteoStrategy implements WeatherStrategy {
         return messages;
     }
 
-    async checkWeatherAlerts(): Promise<string[]> {
-        const weatherResults = (await this.getWeatherResultsFromOpenMeteoApi())
+    async checkWeatherAlerts(config: any): Promise<string[]> {
+        const weatherResults = (await this.getWeatherResultsFromOpenMeteoApi(config))
             .filter(result => OpenMeteoStrategy.severeWeatherList().includes(result.weather_code));
 
         const dailyMap: Map<string, WeatherResult[]> = weatherResultToDailyMap(weatherResults);
@@ -70,10 +69,10 @@ export class OpenMeteoStrategy implements WeatherStrategy {
     }
 
 
-    private async getWeatherResultsFromOpenMeteoApi(): Promise<WeatherResult[]> {
-        const latitude = this.constants.coords.lat;
-        const longitude = this.constants.coords.lon;
-        const timezone = this.constants.timezone;
+    private async getWeatherResultsFromOpenMeteoApi(config: any): Promise<WeatherResult[]> {
+        const latitude = config.coords.lat;
+        const longitude = config.coords.lon;
+        const timezone = config.timezone;
 
         const now = new Date();
 

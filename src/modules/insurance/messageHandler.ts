@@ -1,14 +1,16 @@
 import { Context, Scenes } from "telegraf";
 import { createService } from "../../bot/botManager";
 import { ActiveBotCommand } from "../../bot/model/ActiveBotCommand";
-import { IMessageHandler } from "../../bot/model/IMessageHandler";
+import { ConfiguredMessageHandler } from "../../bot/model/ConfiguredMessageHandler";
 import logger, { LogCommand } from "../../util/logger";
 import { checkInsurance, sendInsurance } from "./functions";
 import { hoursToMillis } from "../../util/time_utils";
+import { ModuleHandler } from "../../bot/moduleHandler";
 
-export class MessageHandler implements IMessageHandler{
+export class MessageHandler extends ConfiguredMessageHandler{
 
     readonly serviceName: string = "Insurance"
+    private readonly config = this.getConfig()
 
     descriptionMapping(): ActiveBotCommand[]{
         return [
@@ -41,7 +43,7 @@ export class MessageHandler implements IMessageHandler{
     @LogCommand()
     async startInsuranceCommand(ctx: Scenes.WizardContext){
         const interval = hoursToMillis(24);
-        let result =await createService(ctx, this.serviceName, interval, true, checkInsurance);
+        let result =await createService(ctx, this.serviceName, interval, true, checkInsurance, this.config);
         if (result == true)
             await ctx.reply("Insurance service activated successfully");
         else

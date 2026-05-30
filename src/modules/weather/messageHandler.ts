@@ -1,13 +1,15 @@
-import { IMessageHandler } from "../../bot/model/IMessageHandler";
 import { Scenes } from "telegraf";
 import { ActiveBotCommand } from "../../bot/model/ActiveBotCommand";
 import { LogCommand } from "../../util/logger";
 import { daysToMillis, hoursToMillis } from "../../util/time_utils";
 import { createService } from "../../bot/botManager";
 import { checkWeather, checkWeatherAlerts } from "./functions";
+import { ConfiguredMessageHandler } from "../../bot/model/ConfiguredMessageHandler";
 
-export class MessageHandler implements IMessageHandler {
+export class MessageHandler extends ConfiguredMessageHandler {
+
     readonly serviceName: string = "weather";
+    private readonly config = this.getConfig();
 
     descriptionMapping(): ActiveBotCommand[] {
         return [
@@ -34,13 +36,13 @@ export class MessageHandler implements IMessageHandler {
     @LogCommand()
     async startWeatherCommand(ctx: Scenes.WizardContext) {
         let interval = daysToMillis(1);
-        let result = await createService(ctx, this.serviceName, interval, true, checkWeather);
+        let result = await createService(ctx, this.serviceName, interval, true, checkWeather, this.config);
     }
 
 
     @LogCommand()
     async startWeatherAlertsCommand(ctx: Scenes.WizardContext) {
         let interval = hoursToMillis(3);
-        let result = await createService(ctx, this.serviceName, interval, true, checkWeatherAlerts);
+        let result = await createService(ctx, this.serviceName, interval, true, checkWeatherAlerts, this.config);
     }
 }

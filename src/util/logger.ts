@@ -44,7 +44,7 @@ export function initLogger(logsDir: string): void {
     }
 
     logger = createLogger({
-        level: 'info',
+        level: config.log_level || 'info',
         format: format.combine(
             format.timestamp({
                 format: 'YYYY-MM-DD HH:mm:ss'
@@ -129,5 +129,3 @@ export default {
         getLogger().debug(message, { caller, ...meta });
     }
 };
-
-

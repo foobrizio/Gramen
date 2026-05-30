@@ -1,6 +1,6 @@
 import { Context } from "telegraf";
 
 export interface WeatherStrategy {
-    checkWeather(): Promise<string[]>;
-    checkWeatherAlerts(): Promise<string[]>;
+    checkWeather(config: any): Promise<string[]>;
+    checkWeatherAlerts(config: any): Promise<string[]>;
 }

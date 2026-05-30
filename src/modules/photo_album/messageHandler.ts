@@ -7,14 +7,18 @@ import * as fs from "fs";
 import * as https from "https"
 import {ActiveBotCommand} from "../../bot/model/ActiveBotCommand";
 import logger, { LogCommand } from "../../util/logger";
-import { stringify } from "../../util/stringify";
+import { ConfiguredMessageHandler } from "../../bot/model/ConfiguredMessageHandler";
 
 
-export class MessageHandler implements IMessageHandler{
+export class MessageHandler extends ConfiguredMessageHandler{
+
     readonly serviceName: string = "Photo_Album";
+    private readonly config = this.getConfig()
     private readonly createAlbumSceneName:string = "photo_album.create_album"
     private readonly addPhotosSceneName:string = "photo_album.add_photos"
     private readonly getAlbumSceneName:string = "photo_album.get_album"
+
+    
 
 
 

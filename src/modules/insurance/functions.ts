@@ -3,8 +3,9 @@ import * as path from 'path';
 import { Context } from "telegraf";
 import { UnipolApiStrategy } from "./strategy/unipolApiStrategy";
 import { PdfChecker } from "./util/pdfChecker";
+import { BotService } from "../../bot/model/BotService";
 
-export async function checkInsurance(ctx: Context): Promise<boolean>{
+export const checkInsurance: BotService = async (ctx) => {
     if(await _checkDaScaricare()){
         await _download()
         await sendInsurance(ctx)
