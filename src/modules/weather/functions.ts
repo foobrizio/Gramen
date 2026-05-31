@@ -13,6 +13,9 @@ export const checkWeather: BotService = async (ctx, config) => {
 }
 
 export const checkWeatherAlerts: BotService = async (ctx, config) => {
-    const result= strategy.checkWeatherAlerts(config);
+    const messages = await strategy.checkWeatherAlerts(config);
+    for(const message of messages){
+        await ctx.reply(message, { parse_mode: 'Markdown'});
+    }
     return true;
 }

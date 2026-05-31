@@ -24,3 +24,22 @@ export function weatherResultToDailyMap(results: WeatherResult[]): Map<string, W
     });
     return resultMap;
 }
+
+export function weatherResultToCodeMap(results: WeatherResult[]): Map<number, WeatherResult[]> {
+    const resultMap: Map<number, WeatherResult[]> = new Map();
+    results.forEach(result => {
+        if (!resultMap.has(result.weather_code)){
+            resultMap.set(result.weather_code, []);
+        }
+        resultMap.get(result.weather_code)?.push(result);
+    });
+    results.forEach(result => {
+        const orderedResult = resultMap.get(result.weather_code)?.sort((a, b) => {
+            const dateA = new Date(`${a.day}T${a.hour}`);
+            const dateB = new Date(`${b.day}T${b.hour}`);
+            return dateA.getTime() - dateB.getTime();
+        }) as WeatherResult[];
+        resultMap.set(result.weather_code, orderedResult);
+    });
+    return resultMap;
+}

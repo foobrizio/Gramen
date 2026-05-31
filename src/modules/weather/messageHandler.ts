@@ -43,6 +43,6 @@ export class MessageHandler extends ConfiguredMessageHandler {
     @LogCommand()
     async startWeatherAlertsCommand(ctx: Scenes.WizardContext) {
         let interval = hoursToMillis(3);
-        let result = await createService(ctx, this.serviceName, interval, true, checkWeatherAlerts, this.config);
+        let result = await createService(ctx, this.serviceName+"_alerts", interval, true, checkWeatherAlerts, this.config);
     }
 }

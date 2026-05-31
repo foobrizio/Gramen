@@ -31,7 +31,12 @@ export enum WeatherCode {
 
 
 
-export function enumToString(code: WeatherCode): string {
+export function enumToString(code: WeatherCode, locale: string = 'en'): string {
+  if(locale !== 'en') {
+    const translation = weatherCodeTranslations[locale]?.[code];
+    if (translation) 
+      return translation;
+  }
   const name: string = WeatherCode[code];
   if (!name) 
     throw new Error(`Unknown WeatherCode: ${code}`);
@@ -40,6 +45,39 @@ export function enumToString(code: WeatherCode): string {
     .replace(/_/g, ' ')
     .replace(/\b\w/g, c => c.toUpperCase());
 }
+
+const weatherCodeTranslations: Record<string, Partial<Record<WeatherCode, string>>> = {
+  it: {
+    [WeatherCode.CLEAR_SKY]: 'Cielo sereno',
+    [WeatherCode.MAINLY_CLEAR]: 'Prevalentemente sereno',
+    [WeatherCode.PARTLY_CLOUDY]: 'Parzialmente nuvoloso',
+    [WeatherCode.OVERCAST]: 'Coperto',
+    [WeatherCode.FOG]: 'Nebbia',
+    [WeatherCode.DEPOSITING_RIME_FOG]: 'Nebbia ghiacciata',
+    [WeatherCode.DRIZZLE_LIGHT]: 'Pioggerella leggera',
+    [WeatherCode.DRIZZLE_MODERATE]: 'Pioggerella moderata',
+    [WeatherCode.DRIZZLE_DENSE]: 'Pioggerella intensa',
+    [WeatherCode.FREEZING_DRIZZLE_LIGHT]: 'Pioggerella gelata leggera',
+    [WeatherCode.FREEZING_DRIZZLE_DENSE]: 'Pioggerella gelata intensa',
+    [WeatherCode.RAIN_SLIGHT]: 'Pioggia leggera',
+    [WeatherCode.RAIN_MODERATE]: 'Pioggia moderata',
+    [WeatherCode.RAIN_HEAVY]: 'Pioggia intensa',
+    [WeatherCode.FREEZING_RAIN_LIGHT]: 'Pioggia gelata leggera',
+    [WeatherCode.FREEZING_RAIN_HEAVY]: 'Pioggia gelata intensa',
+    [WeatherCode.SNOW_SLIGHT]: 'Neve leggera',
+    [WeatherCode.SNOW_MODERATE]: 'Neve moderata',
+    [WeatherCode.SNOW_HEAVY]: 'Neve intensa',
+    [WeatherCode.SNOW_GRAINS]: 'Granelli di neve',
+    [WeatherCode.RAIN_SHOWERS_SLIGHT]: 'Rovesci leggeri',
+    [WeatherCode.RAIN_SHOWERS_MODERATE]: 'Rovesci moderati',
+    [WeatherCode.RAIN_SHOWERS_VIOLENT]: 'Rovesci violenti',
+    [WeatherCode.SNOW_SHOWERS_SLIGHT]: 'Rovesci di neve leggeri',
+    [WeatherCode.SNOW_SHOWERS_HEAVY]: 'Rovesci di neve intensi',
+    [WeatherCode.THUNDERSTORM]: 'Temporale',
+    [WeatherCode.THUNDERSTORM_SLIGHT_HAIL]: 'Temporale con grandine leggera',
+    [WeatherCode.THUNDERSTORM_HEAVY_HAIL]: 'Temporale con grandine intensa',
+  }
+};
 
 export function weatherCodeToIcon(code: WeatherCode): string {
   switch (code) {

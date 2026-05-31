@@ -1,10 +1,11 @@
 import { Context } from "telegraf";
 import axios from "axios";
-import { WeatherResult, weatherResultToDailyMap } from "../model/weatherResult";
+import { WeatherResult, weatherResultToCodeMap, weatherResultToDailyMap } from "../model/weatherResult";
 import { WeatherStrategy } from "./WeatherStrategy";
 import { enumToString, WeatherCode, weatherCodeToIcon } from "../model/weatherCode";
 import { WeatherResponse } from "../model/weatherResponse";
 import { dayOfWeek, monthToString } from "../../../util/time_utils";
+import logger from "../../../util/logger";
 
 
 
@@ -45,11 +46,24 @@ export class OpenMeteoStrategy implements WeatherStrategy {
     }
 
     async checkWeatherAlerts(config: any): Promise<string[]> {
-        const weatherResults = (await this.getWeatherResultsFromOpenMeteoApi(config))
+        const weatherAlerts= (await this.getWeatherResultsFromOpenMeteoApi(config))
             .filter(result => OpenMeteoStrategy.severeWeatherList().includes(result.weather_code));
-
-        const dailyMap: Map<string, WeatherResult[]> = weatherResultToDailyMap(weatherResults);
-        return [];
+        logger.debug("OpenMeteoStrategy - Weather alerts from API: %o", weatherAlerts);
+        let messages: string[] = [];
+        const codeMap: Map<number, WeatherResult[]> = weatherResultToCodeMap(weatherAlerts);
+        codeMap.forEach((results, code) => {
+            let firstResult = results[0];
+            let mostProbability = results.reduce((prev, current) => {
+                return (prev.precipitation_probability > current.precipitation_probability) ? prev : current;
+            });
+            let dayName = dayOfWeek(firstResult.day);
+            let dayNumber = firstResult.day.split('-')[2];
+            let monthName = monthToString(firstResult.day.split('-')[1]);
+            messages.push(`⚠️ Allerta meteo per ${dayName} ${dayNumber} ${monthName}:\n`+
+                `${weatherCodeToIcon(code as WeatherCode)} ${enumToString(code as WeatherCode, 'it')} `+
+                `con probabilità di precipitazione del ${mostProbability.precipitation_probability}%`);
+        });
+        return messages;
     }
 
 
@@ -99,7 +113,7 @@ export class OpenMeteoStrategy implements WeatherStrategy {
                     day: day,
                     hour: hour,
                     weather_code: codes[index],
-                    weather_description: enumToString(codes[index] as WeatherCode),
+                    weather_description: enumToString(codes[index] as WeatherCode, 'it'),
                     temperature: weatherData.hourly.temperature_2m[index],
                     precipitation: weatherData.hourly.precipitation[index],
                     precipitation_probability: weatherData.hourly.precipitation_probability[index]
@@ -107,10 +121,12 @@ export class OpenMeteoStrategy implements WeatherStrategy {
             }
         });
         
-        return results.filter(result => {
+        const final = results.filter(result => {
             let today = now.toISOString().split('T')[0];
             let rightNow = now.toISOString().split('T')[1];
             return result.day > today || (result.day === today && result.hour > rightNow);
         });
+        //logger.debug("OpenMeteoStrategy - Weather results from API: %o", final);
+        return final;
     }
 }
